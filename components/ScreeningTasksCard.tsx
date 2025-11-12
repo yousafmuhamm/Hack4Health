@@ -1,84 +1,23 @@
-// components/ScreeningTasksCard.tsx
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { ScreeningTask } from '@/lib/types';
-import { getDueScreeningTasks } from '@/lib/screening';
+const tasks = [
+  { id: "t1", label: "PHQ-2 depression screen", due: "today" },
+  { id: "t2", label: "Colon cancer screen (FIT)", due: "this week" },
+  { id: "t3", label: "A1C for diabetes risk", due: "next visit" },
+];
 
 export default function ScreeningTasksCard() {
-  const [tasks, setTasks] = useState<ScreeningTask[]>(
-    getDueScreeningTasks()
-  );
-
-  function markCompleted(id: string) {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, status: 'completed' } : task
-      )
-    );
-  }
-
   return (
-    <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-100">
-          Screening & follow-up tasks
-        </h2>
-        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-300">
-          {tasks.filter((t) => t.status === 'due').length} due
-        </span>
-      </div>
-      <p className="text-xs text-slate-400">
-        These tasks are auto-generated when patients are due for routine
-        screening or monitoring, so staff don&apos;t have to manually
-        track them.
-      </p>
-
-      <ul className="space-y-2">
-        {tasks.map((task) => (
+    <section className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+      <h2 className="text-sm font-semibold text-slate-100">Screening tasks</h2>
+      <ul className="mt-2 space-y-2">
+        {tasks.map((t) => (
           <li
-            key={task.id}
-            className="rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100"
+            key={t.id}
+            className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-300"
           >
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="font-medium">
-                  {task.patientName}{' '}
-                  <span className="text-[10px] text-slate-400">
-                    · {task.type}
-                  </span>
-                </p>
-                <p className="text-[11px] text-slate-300">
-                  Due:{' '}
-                  {new Date(task.dueDate).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                  {task.lastDone && (
-                    <> · Last done: {task.lastDone}</>
-                  )}
-                </p>
-                {task.notes && (
-                  <p className="text-[11px] text-slate-400">
-                    {task.notes}
-                  </p>
-                )}
-              </div>
-              <button
-                disabled={task.status === 'completed'}
-                onClick={() => markCompleted(task.id)}
-                className={`rounded-md px-2 py-1 text-[11px] font-medium ${
-                  task.status === 'completed'
-                    ? 'bg-emerald-900/40 text-emerald-200'
-                    : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
-                }`}
-              >
-                {task.status === 'completed'
-                  ? 'Completed'
-                  : 'Send requisition'}
-              </button>
-            </div>
+            <span>{t.label}</span>
+            <span className="text-slate-400">{t.due}</span>
           </li>
         ))}
       </ul>

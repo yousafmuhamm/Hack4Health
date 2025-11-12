@@ -1,177 +1,153 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "react-oidc-context";
+import Link from "next/link";
+import ProfileMenu from "@/components/ProfileMenu";
+import ChatWidget from '@/components/ChatWidget';
+import { useSearchParams } from "next/navigation";
 
-const Page: React.FC = () => {
-  const [showModal, setShowModal] = useState<boolean>(true);
-  const [role, setRole] = useState<"none" | "patient" | "clinician">("none");
 
-  // optional fade-in effect
+
+type Role = "none" | "patient" | "clinician" | "guest";
+
+export default function Page() {
+  const auth = useAuth();
+  const [showModal, setShowModal] = useState(true);
+
+  // block scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = showModal ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [showModal]);
 
+  // close modal if already authenticated
+  useEffect(() => {
+    if (auth.isAuthenticated) setShowModal(false);
+  }, [auth.isAuthenticated]);
+  // re-open modal after logout redirect (?signedout=1)
+  const params = useSearchParams();
+
+  useEffect(() => {
+    if (!auth.isAuthenticated && params.get("signedout") === "1") {
+      setShowModal(true);
+    }
+  }, [auth.isAuthenticated, params]);
+
+  const handleSignIn = async (role: Exclude<Role, "none">) => {
+    try {
+      if (role === "guest") {
+        setShowModal(false);
+        return;
+      }
+      await auth.signinRedirect({ state: { role } });
+    } catch (err) {
+      console.error(err);
+      alert("Sign-in could not start. Check your Cognito configuration.");
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white to-[#e6efff] text-gray-900 font-sans flex flex-col">
-      {/* ===== NAVBAR ===== */}
-      <nav className="w-full flex justify-between items-center px-8 py-5 max-w-6xl mx-auto">
+    <main className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col">
+      {/* NAV */}
+      <nav className="w-full max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-8 h-8 rounded-full bg-[var(--brand-maroon)] text-white grid place-items-center font-bold">
             H
           </div>
-          <span className="font-semibold text-lg tracking-tight">HealthConnect</span>
+          <span className="font-semibold text-lg">HealthConnect</span>
         </div>
 
-        <ul className="hidden md:flex gap-8 text-gray-700 font-medium">
-          <li className="hover:text-gray-900 cursor-pointer">Home</li>
-          <li className="hover:text-gray-900 cursor-pointer">About</li>
-          <li className="hover:text-gray-900 cursor-pointer">Support</li>
-        </ul>
-
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-medium transition">
-          Contact
-        </button>
+        <div className="flex items-center gap-3">
+          {auth.isAuthenticated ? (
+            <ProfileMenu />
+          ) : (
+            <button
+              onClick={() => setShowModal(true)}
+              className="btn btn-maroon"
+            >
+              Sign in
+            </button>
+          )}
+        </div>
       </nav>
 
-      {/* ===== HERO ===== */}
-      <section className="flex flex-col items-center text-center justify-center mt-24 px-6">
-        <p className="text-sm text-gray-500 mb-3">Connecting Patients & Clinicians</p>
-
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold text-gray-900 leading-tight">
+      {/* HERO */}
+      <section className="flex flex-col items-center text-center justify-center mt-16 px-6">
+        <p className="text-sm text-[var(--fg-muted)] mb-3">
+          Connecting Patients & Clinicians
+        </p>
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold leading-tight">
           Healthcare in
           <br />
-          <span className="text-gray-500 font-medium">better hands</span>
+          <span className="text-[var(--accent)] font-semibold">better hands</span>
         </h1>
-
-        <p className="mt-6 text-gray-600 max-w-lg">
-          A secure platform that connects patients and healthcare professionals for efficient care and collaboration.
+        <p className="mt-6 max-w-xl text-[var(--fg-muted)]">
+          Explore as a guest, or sign in to access your patient portal and
+          profile. Clinicians can view incoming pre-consults and tasks.
         </p>
+
+        <div className="mt-8 flex gap-3">
+          <Link href="/patient" className="btn btn-maroon">
+            Go to patient portal
+          </Link>
+          <Link
+            href="/clinician"
+            className="btn btn-outline-lavender text-[var(--fg)]"
+          >
+            Clinician dashboard
+          </Link>
+        </div>
       </section>
 
+      {/* ROLE CHOOSER POPUP */}
       {/* ===== MODAL ===== */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-lg w-[90%] max-w-md p-8 text-center relative animate-fadeIn">
-            {role === "none" && (
-              <>
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-                  Who are you?
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Please select your role to continue.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => setRole("patient")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-medium transition"
-                  >
-                    I’m a Patient
-                  </button>
-                  <button
-                    onClick={() => setRole("clinician")}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-full font-medium transition"
-                  >
-                    I’m a Clinician
-                  </button>
-                </div>
-              </>
-            )}
+{showModal && !auth.isAuthenticated && (
+  <div className="fixed inset-0 modal-scrim flex items-center justify-center z-50">
+    <div className="modal-panel rounded-2xl w-[90%] max-w-xl p-7 relative animate-fadeIn">
+      <h2 className="text-2xl font-semibold mb-5 text-white">
+        Who are you using this tool as?
+      </h2>
 
-            {role === "patient" && (
-              <>
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-                  Patient Sign-In
-                </h2>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setShowModal(false);
-                  }}
-                  className="flex flex-col gap-4 text-left"
-                >
-                  <label className="text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="patient@email.com"
-                    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <label className="text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="********"
-                    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition"
-                  >
-                    Sign In
-                  </button>
-                </form>
-              </>
-            )}
+      <div className="flex flex-col gap-4">
+        <button
+          onClick={() => handleSignIn("patient")}
+          className="role-row text-white"
+        >
+          ○ A Patient looking for guidance
+        </button>
 
-            {role === "clinician" && (
-              <>
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-                  Clinician Sign-In
-                </h2>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    setShowModal(false);
-                  }}
-                  className="flex flex-col gap-4 text-left"
-                >
-                  <label className="text-sm font-medium text-gray-700">
-                    Clinician ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., CLN-10052"
-                    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <label className="text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="********"
-                    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition"
-                  >
-                    Sign In
-                  </button>
-                </form>
-              </>
-            )}
+        <button
+          onClick={() => handleSignIn("clinician")}
+          className="role-row text-white"
+        >
+          ○ A Clinician supporting a patient
+        </button>
 
-            {/* close button */}
-            <button
-              onClick={() => {
-                setShowModal(false);
-                setRole("none");
-              }}
-              className="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
+        {/* Guest just closes modal */}
+        <button
+          onClick={() => setShowModal(false)}
+          className="role-row text-white"
+        >
+          ○ A Guest just exploring the tool
+        </button>
+      </div>
+
+      <button
+        onClick={() => { setShowModal(false); }}
+        className="absolute top-3 right-4 text-white/70 hover:text-white text-xl"
+        aria-label="Close"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+)}
+
+      {/* Floating patient portal chat */}
+      <ChatWidget />
     </main>
   );
-};
-
-export default Page;
+}

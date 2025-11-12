@@ -1,7 +1,7 @@
-// app/layout.tsx
+import "./globals.css";
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
-import "./globals.css";
+import OidcProvider from "./providers/oidc-provider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -10,14 +10,16 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "CoinFusion",
-  description: "Landing page UI",
+  title: "HealthConnect",
+  description: "Patients & clinicians portal",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={spaceGrotesk.variable}>{children}</body>
+      <body className={spaceGrotesk.variable}>
+        <OidcProvider>{children}</OidcProvider>
+      </body>
     </html>
   );
 }
