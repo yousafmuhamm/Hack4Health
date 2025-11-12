@@ -1,50 +1,41 @@
-// lib/triage.ts
-
-import { SymptomInput, TriageResult, RecommendedCare } from './types';
+import { SymptomInput, TriageResult } from "./types";
 
 export function getTriageResult(input: SymptomInput): TriageResult {
-  const { severity, redFlags, description } = input;
+  const text = input.symptoms.toLowerCase();
 
-  const hasMajorRedFlag =
-    redFlags.chestPain ||
-    redFlags.breathingDifficulty ||
-    redFlags.facialDroop;
-
-  const hasNeuroRedFlag = redFlags.weakness || redFlags.confusion;
-
-  if (hasMajorRedFlag || hasNeuroRedFlag) {
+  // simple demo rules — replace with real logic later
+  if (input.redFlags) {
     return {
-      urgency: 'high',
-      recommendedCare: 'er',
-      explanation:
-        'Your symptoms may suggest a serious condition. You should go to the emergency department immediately or call emergency services.',
+      urgency: "emergency",
+      recommendedCare: "ER",
+      summary:
+        "Red flags reported. Seek emergency care immediately (call local EMS if necessary).",
     };
   }
 
-  // Very rough keyword sample logic
-  const desc = description.toLowerCase();
-  let recommendedCare: RecommendedCare = 'walk-in';
-
-  if (desc.includes('sore throat') || desc.includes('cough')) {
-    recommendedCare = 'walk-in';
-  } else if (desc.includes('medication') || desc.includes('refill')) {
-    recommendedCare = 'family-doctor';
-  } else if (desc.includes('mild') || desc.includes('check up')) {
-    recommendedCare = 'virtual';
+  if (text.includes("chest pain") || (input.severity === "severe" && text.includes("pain"))) {
+    return {
+      urgency: "emergency",
+      recommendedCare: "ER",
+      summary:
+        "Severe or chest-related symptoms. Go to the nearest emergency department.",
+    };
   }
 
-  if (severity === 'severe') {
-    recommendedCare = 'er';
+  if (input.severity === "moderate") {
+    return {
+      urgency: "urgent",
+      recommendedCare: "Walk-in clinic",
+      summary:
+        "Your symptoms suggest timely in-person assessment is recommended (same day).",
+    };
   }
 
-  let urgency: TriageResult['urgency'] = 'low';
-  if (severity === 'moderate') urgency = 'moderate';
-  if (severity === 'severe') urgency = 'high';
-
+  // default
   return {
-    urgency,
-    recommendedCare,
-    explanation:
-      'Based on your description and answers, this issue does not appear immediately life-threatening, but should still be assessed by a clinician at the suggested level of care.',
+    urgency: "routine",
+    recommendedCare: "Family doctor",
+    summary:
+      "Your symptoms look non-urgent. Book with your family doctor or use virtual care.",
   };
 }

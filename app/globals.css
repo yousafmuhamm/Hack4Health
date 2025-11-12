@@ -1,21 +1,87 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  font-family: "Inter", sans-serif;
-  background-color: #ffffff;
+/* ---------- base ---------- */
+:root{
+  --lavender-50:#f7f5ff;
+  --lavender-200:#e6dfff;
+  --lavender-400:#c9b2ff;
+  --lavender-500:#b57edc;        /* primary lavender */
+  --lavender-600:#a47bff;
+
+  --maroon-100:#ffd9e6;          /* light maroon */
+  --maroon-300:#e8a3b6;          /* light maroon (ui) */
+  --maroon-500:#7a1631;          /* brand maroon */
+  --maroon-700:#4b0026;          /* deep maroon */
+
+  --bg: var(--lavender-50);
+  --fg: #201821;
+  --fg-muted:#746176;
+  --accent: var(--lavender-600);
+  --cta: var(--maroon-500);
+  --chip:#efe8ff;
+  --chipText:#2b1b33;
+  --popup-bg:#1d0e18;            /* dark popup backdrop */
+  --ring:#8e5bff;
+  --ring-soft:#5a2bff40;
 }
 
-button {
-  transition: all 0.2s ease-in-out;
+*{ box-sizing:border-box }
+html,body{ height:100% }
+body{
+  margin:0;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:var(--fg);
+  background:var(--bg);
 }
-@import "tailwindcss";
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+button{ transition:all .2s ease }
+
+/* ---------- utilities you use in TSX ---------- */
+.theme-card{
+  background:linear-gradient(180deg, #140b13 0%, #0f0a11 100%);
+  border:1px solid var(--ring);
+  box-shadow:0 0 0 3px var(--ring-soft);
+}
+.theme-outline{
+  border:2px solid var(--ring);
+  box-shadow:0 0 0 3px var(--ring-soft);
+}
+.btn-cta{
+  background:var(--cta);
+  color:#fff;
+}
+.btn-cta:hover{
+  filter:brightness(1.05);
+}
+.btn-secondary{
+  background:var(--lavender-500);
+  color:#fff;
+}
+.btn-secondary:hover{ filter:brightness(1.05) }
+
+/* modal bg and glass */
+.modal-scrim{
+  background: rgba(0,0,0,.7);
+  backdrop-filter:saturate(120%) blur(6px);
+}
+.modal-panel {
+  background: #bca7e8;              /* 🎨 light purple (soft lavender) */
+  border: 2px solid var(--ring);    /* keep lavender outline */
+  color: #ffffff;                   /* white text */
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-in-out;
+/* radio rows */
+.role-row{
+  width:100%;
+  text-align:left;
+  background:transparent;
+  border-radius:14px;
+  border:2px solid var(--ring);
+  padding:.9rem 1rem;
+  color:#fff;               /* <— ensures PURE white label text */
 }
+.role-row:hover{ background:#2b1a3a }
+
+/* tiny animation */
+@keyframes fadeIn{ from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:none} }
+.animate-fadeIn{ animation:fadeIn .25s ease }
