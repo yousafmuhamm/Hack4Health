@@ -2,6 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Setup
+1. Copy `.env.example` → `.env.local`
+2. Fill in all `NEXT_PUBLIC_COGNITO_*` values (ask the team lead for values)
+3. Run: npm install
+4. Start dev server: npm run dev
+
+
 First, run the development server:
 
 ```bash
