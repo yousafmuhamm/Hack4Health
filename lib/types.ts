@@ -22,10 +22,7 @@ export type Preconsult = {
   patientName: string;
   age: number;
   summary: string;
+  details?: string;
   createdAt: string;
-  triageSummary: string;
-
-  // NEW:
-  urgency: PreconsultUrgency;
-  status: PreconsultStatus;
+  urgency: PreconsultUrgency; // triage result from AI/patient flow
 };

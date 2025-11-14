@@ -2,16 +2,20 @@
 
 import { Preconsult } from "@/lib/types";
 
+type DecisionStatus = "accepted" | "deferred" | undefined;
+
 type PatientPreconsultDetailProps = {
   item: Preconsult | null;
   onAccept: (id: string) => void;
   onDefer: (id: string) => void;
+  decision?: DecisionStatus;
 };
 
 export default function PatientPreconsultDetail({
   item,
   onAccept,
   onDefer,
+  decision,
 }: PatientPreconsultDetailProps) {
   if (!item) {
     return (
@@ -21,15 +25,43 @@ export default function PatientPreconsultDetail({
     );
   }
 
+  const decisionLabel =
+    decision === "accepted"
+      ? "Accepted"
+      : decision === "deferred"
+      ? "Deferred"
+      : null;
+
+  const decisionClass =
+    decision === "accepted"
+      ? "bg-emerald-500/20 text-emerald-300"
+      : decision === "deferred"
+      ? "bg-amber-500/20 text-amber-300"
+      : "";
+
   return (
     <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-100">
-          {item.patientName} • {item.age}
-        </h2>
-        <span className="text-xs text-slate-400">
-          {new Date(item.createdAt).toLocaleString()}
-        </span>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-100">
+            {item.patientName} • {item.age}
+          </h2>
+          <p className="text-xs text-slate-400">
+            {new Date(item.createdAt).toLocaleString()}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-300">
+            {item.urgency.replace("_", " ").toUpperCase()}
+          </span>
+          {decisionLabel && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${decisionClass}`}
+            >
+              {decisionLabel}
+            </span>
+          )}
+        </div>
       </div>
 
       <p className="text-sm text-slate-300">{item.summary}</p>

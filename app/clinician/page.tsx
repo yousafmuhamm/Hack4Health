@@ -10,13 +10,12 @@ import ScreeningTasksCard from "@/components/ScreeningTasksCard";
 type DecisionStatus = "accepted" | "deferred";
 
 export default function ClinicianPage() {
-  // Keep pre-consults and selection in state
   const [preconsults] = useState<Preconsult[]>(mockPreconsults);
+
   const [selectedId, setSelectedId] = useState<string | null>(
     preconsults[0]?.id ?? null
   );
 
-  // Track what the clinician did with each case (for now, just in memory)
   const [decisions, setDecisions] = useState<
     Record<string, DecisionStatus | undefined>
   >({});
@@ -26,42 +25,59 @@ export default function ClinicianPage() {
 
   function handleAccept(id: string) {
     setDecisions((prev) => ({ ...prev, [id]: "accepted" }));
-    console.log("Accepted pre-consult:", id);
   }
 
   function handleDefer(id: string) {
     setDecisions((prev) => ({ ...prev, [id]: "deferred" }));
-    console.log("Deferred pre-consult:", id);
   }
 
+  const acceptedCases = preconsults.filter(
+    (pc) => decisions[pc.id] === "accepted"
+  );
+
+  const selectedDecision =
+    selected && decisions[selected.id] ? decisions[selected.id] : undefined;
+
   return (
-    <div className="space-y-6">
-      <section className="space-y-2">
-        <h1 className="text-2xl font-semibold text-slate-50">
-          Clinician dashboard
-        </h1>
-        <p className="max-w-2xl text-sm text-slate-300">
-          This view simulates what a family physician or clinic team might see:
-          pre-consult summaries flowing in from the patient navigation tool, and
-          auto-generated screening tasks that help reduce admin overhead and
-          burnout.
-        </p>
-      </section>
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex justify-center px-4 py-10">
+      <div className="w-full max-w-6xl">
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <PatientPreconsultList
-          items={preconsults}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
-        <PatientPreconsultDetail
-          item={selected}
-          onAccept={handleAccept}
-          onDefer={handleDefer}
-        />
+        {/* Page Title */}
+        <div className="text-center mb-10">
+          <p className="text-sm text-[var(--fg-muted)] uppercase tracking-wide">
+            Clinician Workflow
+          </p>
+          <h1 className="text-4xl sm:text-5xl font-bold leading-tight mt-1">
+            <span className="text-[var(--accent)]">Care Review</span> Dashboard
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-[var(--fg-muted)]">
+            Structured AI-generated pre-consults and suggested screening tasks to streamline patient care.
+          </p>
+        </div>
+
+        {/* Dashboard Panels */}
+        <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl">
+          <PatientPreconsultList
+            items={preconsults}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            decisions={decisions}
+          />
+
+          <PatientPreconsultDetail
+            item={selected}
+            onAccept={handleAccept}
+            onDefer={handleDefer}
+            decision={selectedDecision}
+          />
+        </div>
+
+        {/* Screening Tasks */}
+        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl">
+          <ScreeningTasksCard acceptedCases={acceptedCases} />
+        </div>
+
       </div>
-
-      <ScreeningTasksCard />
     </div>
   );
 }
