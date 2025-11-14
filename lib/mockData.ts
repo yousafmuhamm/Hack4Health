@@ -1,4 +1,3 @@
-// lib/mockData.ts
 import { Preconsult } from "./types";
 
 export const mockPreconsults: Preconsult[] = [
@@ -7,7 +6,8 @@ export const mockPreconsults: Preconsult[] = [
     patientName: "Aisha Khan",
     age: 29,
     summary: "Sore throat, mild fever, 2 days, no red flags.",
-    details: "Mild odynophagia, afebrile at triage, no SOB, able to swallow fluids.",
+    details:
+      "Mild odynophagia, afebrile at triage, no SOB, able to swallow fluids.",
     createdAt: "2025-11-14T03:10:21Z",
     urgency: "not_urgent",
   },
@@ -29,6 +29,28 @@ export const mockPreconsults: Preconsult[] = [
     details:
       "Papular, pruritic rash without systemic symptoms. No fever, no mucosal involvement.",
     createdAt: "2025-11-13T21:10:21Z",
+    urgency: "mildly_urgent",
+  },
+  {
+    id: "4",
+    patientName: "Linda Park",
+    age: 52,
+    summary:
+      "Low mood, fatigue, and poor sleep for the past month, worries about depression.",
+    details:
+      "Reports feeling down most days, low energy, difficulty concentrating. Denies suicidality. Past history of hypertension.",
+    createdAt: "2025-11-13T19:45:21Z",
+    urgency: "mildly_urgent",
+  },
+  {
+    id: "5",
+    patientName: "Jamal Ahmed",
+    age: 58,
+    summary:
+      "Increased thirst, frequent urination, and unintentional weight loss over 3 months, concerned about diabetes.",
+    details:
+      "Polyuria, polydipsia, nocturia x3, clothes fitting looser. No chest pain or SOB. Family history of type 2 diabetes.",
+    createdAt: "2025-11-13T18:20:21Z",
     urgency: "mildly_urgent",
   },
 ];
