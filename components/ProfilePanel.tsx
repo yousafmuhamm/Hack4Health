@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
 /**
- * Simple side panel drawer showing:
- * - signed-in email (if any)
- * - optional Health History (stored locally for demo)
+ * Side panel showing:
+ * - Signed-in email (if any)
+ * - Health History (stored locally for demo)
  * In production, you’d save this to your backend.
  */
 export default function ProfilePanel({
@@ -27,7 +27,9 @@ export default function ProfilePanel({
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) setHistory(saved);
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, [open]);
 
   const saveHistory = () => {
@@ -44,19 +46,24 @@ export default function ProfilePanel({
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/40 transition-opacity ${
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          open
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
         onClick={onClose}
       />
 
       {/* Drawer */}
       <aside
-        className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transition-transform duration-300
-        ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transition-transform duration-300 ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Patient Profile</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Patient Profile
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-xl"
@@ -70,11 +77,12 @@ export default function ProfilePanel({
           {auth.isAuthenticated ? (
             <div className="text-sm">
               <div className="text-gray-500">Signed in as</div>
-              <div className="font-medium">{email}</div>
+              <div className="font-medium text-slate-900">{email}</div>
             </div>
           ) : (
             <div className="text-sm text-gray-600">
-              You’re browsing as a guest. Sign in to sync profile in the future.
+              You’re browsing as a guest. Sign in to sync your profile in the
+              future.
             </div>
           )}
 
@@ -83,7 +91,7 @@ export default function ProfilePanel({
               Health History (optional)
             </label>
             <textarea
-              className="w-full min-h-[160px] rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full min-h-[160px] rounded-lg border border-gray-300 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={history}
               onChange={(e) => setHistory(e.target.value)}
               placeholder="Allergies, medications, major surgeries, chronic conditions, etc."
@@ -104,7 +112,7 @@ export default function ProfilePanel({
             </div>
             <p className="text-xs text-gray-500">
               Demo only: this saves to your browser storage. In production, save
-              to your backend/API.
+              this information to your clinic’s backend/API.
             </p>
           </div>
         </div>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "react-oidc-context";
-import Link from "next/link";
-import ProfileMenu from "@/components/ProfileMenu";
+import { useRouter } from "next/navigation";
 import { mockPreconsults } from "@/lib/mockData";
 import { Preconsult } from "@/lib/types";
 import PatientPreconsultList from "@/components/PatientPreconsultList";
@@ -12,11 +11,45 @@ import ScreeningTasksCard from "@/components/ScreeningTasksCard";
 
 export default function ClinicianPage() {
   const auth = useAuth();
+  const router = useRouter();
+
   const [selectedId, setSelectedId] = useState<string | null>(
     mockPreconsults[0]?.id ?? null
   );
+
   const selected: Preconsult | null =
     mockPreconsults.find((pc) => pc.id === selectedId) ?? null;
+
+  // Clinician-only access guard
+  useEffect(() => {
+    if (auth.isLoading) return;
+
+    if (!auth.isAuthenticated) {
+      router.replace("/");
+      return;
+    }
+
+    const role = auth.user?.profile?.role;
+    if (role !== "clinician") {
+      if (role === "patient") {
+        router.replace("/patient");
+      } else {
+        router.replace("/");
+      }
+    }
+  }, [auth.isLoading, auth.isAuthenticated, auth.user, router]);
+
+  if (auth.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-300">
+        Checking permissions…
+      </div>
+    );
+  }
+
+  if (!auth.isAuthenticated || auth.user?.profile?.role !== "clinician") {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -25,10 +58,10 @@ export default function ClinicianPage() {
           Clinician dashboard
         </h1>
         <p className="max-w-2xl text-sm text-slate-300">
-          This view simulates what a family physician or clinic team
-          might see: pre-consult summaries flowing in from the patient
-          navigation tool, and auto-generated screening tasks that help
-          reduce admin overhead and burnout.
+          This view simulates what a family physician or clinic team might see:
+          pre-consult summaries flowing in from the patient navigation tool, and
+          auto-generated screening tasks that help reduce admin overhead and
+          burnout.
         </p>
       </section>
 
