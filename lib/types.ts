@@ -14,12 +14,18 @@ export type TriageResult = {
   summary: string;
 };
 
+export type PreconsultStatus = "new" | "accepted" | "deferred";
+export type PreconsultUrgency = "not_urgent" | "mildly_urgent" | "very_urgent";
+
 export type Preconsult = {
   id: string;
   patientName: string;
   age: number;
   summary: string;
-  createdAt: string; // ISO
-  priority: "high" | "medium" | "low";
-  details?: string;
+  createdAt: string;
+  triageSummary: string;
+
+  // NEW:
+  urgency: PreconsultUrgency;
+  status: PreconsultStatus;
 };

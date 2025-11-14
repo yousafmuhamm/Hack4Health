@@ -2,11 +2,17 @@
 
 import { Preconsult } from "@/lib/types";
 
+type PatientPreconsultDetailProps = {
+  item: Preconsult | null;
+  onAccept: (id: string) => void;
+  onDefer: (id: string) => void;
+};
+
 export default function PatientPreconsultDetail({
   item,
-}: {
-  item: Preconsult | null;
-}) {
+  onAccept,
+  onDefer,
+}: PatientPreconsultDetailProps) {
   if (!item) {
     return (
       <section className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-slate-300">
@@ -25,17 +31,26 @@ export default function PatientPreconsultDetail({
           {new Date(item.createdAt).toLocaleString()}
         </span>
       </div>
+
       <p className="text-sm text-slate-300">{item.summary}</p>
+
       {item.details && (
         <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-300">
           {item.details}
         </div>
       )}
+
       <div className="flex gap-2 pt-1">
-        <button className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
+        <button
+          onClick={() => onAccept(item.id)}
+          className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+        >
           Accept
         </button>
-        <button className="rounded-full border border-slate-500 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800">
+        <button
+          onClick={() => onDefer(item.id)}
+          className="rounded-full border border-slate-500 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+        >
           Defer
         </button>
       </div>

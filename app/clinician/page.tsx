@@ -1,54 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "react-oidc-context";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { mockPreconsults } from "@/lib/mockData";
 import { Preconsult } from "@/lib/types";
 import PatientPreconsultList from "@/components/PatientPreconsultList";
 import PatientPreconsultDetail from "@/components/PatientPreconsultDetail";
 import ScreeningTasksCard from "@/components/ScreeningTasksCard";
 
-export default function ClinicianPage() {
-  const auth = useAuth();
-  const router = useRouter();
+type DecisionStatus = "accepted" | "deferred";
 
+export default function ClinicianPage() {
+  // Keep pre-consults and selection in state
+  const [preconsults] = useState<Preconsult[]>(mockPreconsults);
   const [selectedId, setSelectedId] = useState<string | null>(
-    mockPreconsults[0]?.id ?? null
+    preconsults[0]?.id ?? null
   );
 
+  // Track what the clinician did with each case (for now, just in memory)
+  const [decisions, setDecisions] = useState<
+    Record<string, DecisionStatus | undefined>
+  >({});
+
   const selected: Preconsult | null =
-    mockPreconsults.find((pc) => pc.id === selectedId) ?? null;
+    preconsults.find((pc) => pc.id === selectedId) ?? null;
 
-  // Clinician-only access guard
-  useEffect(() => {
-    if (auth.isLoading) return;
-
-    if (!auth.isAuthenticated) {
-      router.replace("/");
-      return;
-    }
-
-    const role = auth.user?.profile?.role;
-    if (role !== "clinician") {
-      if (role === "patient") {
-        router.replace("/patient");
-      } else {
-        router.replace("/");
-      }
-    }
-  }, [auth.isLoading, auth.isAuthenticated, auth.user, router]);
-
-  if (auth.isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-slate-300">
-        Checking permissions…
-      </div>
-    );
+  function handleAccept(id: string) {
+    setDecisions((prev) => ({ ...prev, [id]: "accepted" }));
+    console.log("Accepted pre-consult:", id);
   }
 
-  if (!auth.isAuthenticated || auth.user?.profile?.role !== "clinician") {
-    return null;
+  function handleDefer(id: string) {
+    setDecisions((prev) => ({ ...prev, [id]: "deferred" }));
+    console.log("Deferred pre-consult:", id);
   }
 
   return (
@@ -67,11 +50,15 @@ export default function ClinicianPage() {
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <PatientPreconsultList
-          items={mockPreconsults}
+          items={preconsults}
           selectedId={selectedId}
           onSelect={setSelectedId}
         />
-        <PatientPreconsultDetail item={selected} />
+        <PatientPreconsultDetail
+          item={selected}
+          onAccept={handleAccept}
+          onDefer={handleDefer}
+        />
       </div>
 
       <ScreeningTasksCard />

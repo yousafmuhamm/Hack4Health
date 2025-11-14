@@ -7,7 +7,8 @@ export const mockPreconsults: Preconsult[] = [
     age: 29,
     summary: "Sore throat, mild fever, 2 days, no red flags.",
     createdAt: new Date().toISOString(),
-    priority: "low",
+    urgency: "not_urgent",
+    status: "new",
     details:
       "Mild odynophagia, afebrile at triage, no SOB, able to swallow fluids.",
   },
@@ -17,7 +18,8 @@ export const mockPreconsults: Preconsult[] = [
     age: 47,
     summary: "Intermittent chest discomfort on exertion, started 1 week ago.",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    priority: "high",
+    urgency: "very_urgent",
+    status: "new",
     details:
       "Exertional substernal pressure, improves with rest, no diaphoresis now. Needs urgent in-person assessment.",
   },
@@ -27,7 +29,8 @@ export const mockPreconsults: Preconsult[] = [
     age: 18,
     summary: "Rash on arms after new detergent, itchy, started yesterday.",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-    priority: "medium",
+    urgency: "mildly_urgent",
+    status: "new",
     details:
       "Papular, pruritic rash without systemic symptoms. Consider topical treatment, avoid trigger.",
   },

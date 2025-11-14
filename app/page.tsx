@@ -11,7 +11,7 @@ type Role = "none" | "patient" | "clinician" | "guest";
 
 export default function Page() {
   const auth = useAuth();
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(false); //made it false from true. change back to true after
   const [signInOnly, setSignInOnly] = useState(false);
   const params = useSearchParams();
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function Page() {
     const signinOnlyParam = params.get("signinOnly") === "1";
 
     if (!auth.isAuthenticated && (signedOut || signinOnlyParam)) {
-      setShowModal(true);
+      //setShowModal(true);
       setSignInOnly(signinOnlyParam);
     }
   }, [auth.isAuthenticated, params]);
