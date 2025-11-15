@@ -1,27 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
-import { useAuth } from "react-oidc-context";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProfilePanel from "./ProfilePanel";
 
+/* -----------------------------
+   AWS Cognito Logout Function
+------------------------------ */
+function cognitoLogout() {
+  try {
+    localStorage.removeItem("role");
+  } catch {}
+
+  const domain = "https://healthconnect.auth.us-west-2.amazoncognito.com";
+  const clientId = "4s6jh35ds200g1abjd19pqd9gv";
+
+  const redirectUri =
+    typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? "http://localhost:3000"
+      : "https://example.com/"; // replace when deployed
+
+  const logoutUrl =
+    `${domain}/logout?client_id=${clientId}` +
+    `&logout_uri=${encodeURIComponent(redirectUri)}`;
+
+  window.location.href = logoutUrl;
+}
+
 export default function ProfileMenu() {
-  const auth = useAuth();
   const router = useRouter();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const role = (auth.user?.profile?.role as string) ?? "";
+  // READ ROLE FROM LOCALSTORAGE
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role");
+    setRole(storedRole);
+  }, []);
+
   const isClinician = role === "clinician";
   const isPatient = role === "patient";
-
-  const handleSignOut = () => {
-    if (!auth.signoutRedirect) return;
-    auth.signoutRedirect({
-      post_logout_redirect_uri: `${window.location.origin}/?signedout=1`,
-    });
-  };
 
   const goPatient = () => {
     setMenuOpen(false);
@@ -81,7 +102,7 @@ export default function ProfileMenu() {
             <div className="border-t border-slate-200 my-1" />
 
             <button
-              onClick={handleSignOut}
+              onClick={cognitoLogout}
               className="w-full text-left px-3 py-2 text-red-600 hover:bg-red-50"
             >
               Sign out
