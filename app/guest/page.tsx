@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import ChatWidget from "@/components/ChatWidget";
 
-// Shared AWS login helper
 // Shared AWS login helper
 function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
@@ -11,7 +11,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
       ? "http://localhost:3000"
       : "https://example.com/";
 
-  // 👇 NEW: include returnPath in state
+  // include returnPath in state
   const returnPath = role === "patient" ? "/patient" : "/clinician";
 
   const state = JSON.stringify({ role, returnPath });
@@ -26,21 +26,23 @@ function buildLoginUrl(role: "patient" | "clinician") {
   );
 }
 
-
-
 export default function GuestPage() {
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   return (
-    <main className="min-h-screen bg-white text-slate-900 flex flex-col">
+    <main className="flex min-h-screen flex-col bg-gradient-to-b from-[var(--maroon-700)] via-[var(--maroon-500)] to-[var(--maroon-300)] text-slate-50">
       {/* NAV */}
-      <nav className="w-full max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[var(--brand-maroon)] text-white grid place-items-center font-bold">
-            H
-          </div>
-          <span className="font-semibold text-lg">HealthConnect</span>
-        </div>
+      <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
+        {/* Brand matches landing and links back to home */}
+        <Link href="/" className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
+            ❤️
+          </span>
+          <span className="text-lg font-semibold text-white">
+            HealthConnect
+          </span>
+        </Link>
 
         <button
           onClick={() => setShowSignInModal(true)}
@@ -50,41 +52,38 @@ export default function GuestPage() {
         </button>
       </nav>
 
-      {/* HERO */}
-      <section className="w-full max-w-5xl mx-auto px-6 py-12">
-        <p className="text-xs uppercase tracking-wide text-slate-500">
-          Guest preview
-        </p>
-        <h1 className="text-4xl font-bold text-slate-900">
-          Take control of your healthcare experience.
-        </h1>
-        <p className="max-w-2xl text-sm text-slate-800 mt-4">
-          Explore how HealthConnect helps patients describe their symptoms...
-        </p>
+      {/* HERO CARD */}
+      <section className="mx-auto w-full max-w-5xl px-6 pb-10">
+        <div className="rounded-3xl border border-white/10 bg-white/95 p-6 text-slate-900 shadow-xl lg:p-8">
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            Guest preview
+          </p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900 md:text-4xl">
+            Built to support safer care.
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm text-slate-800">
+            HealthConnect was created because we care about patient safety and
+            the wellbeing of clinicians. By organizing pre-consult information,
+            reducing repeated storytelling, and making next steps clearer, the
+            platform helps patients avoid unsafe delays while giving clinicians
+            a calmer, more structured workflow. These are some of the reasons we
+            built this website.
+          </p>
 
-        <div className="flex gap-3 mt-6 flex-wrap">
-          <a href="#guest-patient-portal" className="btn btn-maroon">
-            Patient Portal
-          </a>
-
-          <a href="/education" className="btn btn-outline-lavender">
-            Health education
-          </a>
-
-          <button
-            onClick={() => setShowSignInModal(true)}
-            className="btn btn-outline-lavender"
-          >
-            Sign in to get started
-          </button>
+          {/* CTA row – only Health education, using maroon styling */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a href="/education" className="btn btn-maroon">
+              Health education
+            </a>
+          </div>
         </div>
       </section>
 
       {/* SIGN IN MODAL */}
       {showSignInModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="modal-panel rounded-2xl w-[90%] max-w-xl p-7 relative">
-            <h2 className="text-2xl font-semibold mb-5 text-white">
+        <div className="modal-scrim fixed inset-0 z-50 flex items-center justify-center">
+          <div className="modal-panel relative w-[90%] max-w-xl rounded-2xl p-7 shadow-xl animate-fadeIn">
+            <h2 className="mb-5 text-2xl font-semibold text-white">
               Sign in to get started
             </h2>
 
@@ -110,7 +109,7 @@ export default function GuestPage() {
 
             <button
               onClick={() => setShowSignInModal(false)}
-              className="absolute top-3 right-4 text-white/70 hover:text-white text-xl"
+              className="absolute right-4 top-3 text-xl text-white/70 hover:text-white"
             >
               ×
             </button>
@@ -118,7 +117,34 @@ export default function GuestPage() {
         </div>
       )}
 
-      <ChatWidget />
+      {/* Floating CareQuest AI button */}
+      <button
+        onClick={() => setShowChat(true)}
+        className="fixed bottom-4 right-4 z-40 rounded-full bg-[var(--brand-maroon)] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-lg hover:bg-[var(--brand-maroon-dark)]"
+      >
+        CareQuest AI
+      </button>
+
+      {/* CareQuest AI popup */}
+      {showChat && (
+        <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm rounded-3xl border border-[var(--lavender-400)] bg-[var(--popup-bg)]/95 shadow-2xl shadow-black/50 backdrop-blur-md overflow-hidden">
+          {/* Header with single CareQuest AI label */}
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-100">
+              CareQuest AI
+            </span>
+            <button
+              onClick={() => setShowChat(false)}
+              className="text-lg leading-none text-slate-300 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Chat content – now just one box total */}
+          <ChatWidget variant="popup" />
+        </div>
+      )}
     </main>
   );
 }

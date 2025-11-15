@@ -13,6 +13,12 @@
   --maroon-500:#7a1631;          /* brand maroon */
   --maroon-700:#4b0026;          /* deep maroon */
 
+  /* NEW: shared brand tokens used on landing + guest */
+  --brand-maroon:#6a1b1a;
+  --brand-maroon-dark:#4a1a1a;
+  --lavender:#c8b6ff;
+  --lavender-light:#f3edff;
+
   --bg: var(--lavender-50);
   --fg: #201821;
   --fg-muted:#746176;

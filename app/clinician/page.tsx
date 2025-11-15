@@ -5,8 +5,7 @@ import { useAuth } from "react-oidc-context";
 import { useRouter } from "next/navigation";
 import { mockPreconsults } from "@/lib/mockData";
 import { cognitoLogout } from "@/app/utils/logout";
-
-type Preconsult = any;
+import type { Preconsult } from "@/lib/types";
 
 type ScreeningTask = {
   id: string;
@@ -45,7 +44,7 @@ const getStatusLabelFromPreconsult = (
   const raw = (p.status || "").toString().toLowerCase();
   if (raw === "accepted") return "accepted";
   if (raw === "deferred") return "deferred";
-  return "pending";
+  return "pending"; // "new" or undefined
 };
 
 // Shared comparator for tasks: urgency, then created time
@@ -64,7 +63,7 @@ export default function ClinicianPage() {
   const router = useRouter();
 
   const [preconsults, setPreconsults] = useState<Preconsult[]>(
-    () => (mockPreconsults as Preconsult[]) ?? []
+    () => mockPreconsults ?? []
   );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
@@ -89,7 +88,7 @@ export default function ClinicianPage() {
   // Pick first item by default
   useEffect(() => {
     if (!selectedId && preconsults.length > 0) {
-      setSelectedId(preconsults[0].id ?? preconsults[0].preconsultId);
+      setSelectedId(preconsults[0].id);
     }
   }, [preconsults, selectedId]);
 
@@ -104,9 +103,7 @@ export default function ClinicianPage() {
 
   const selected = useMemo(() => {
     if (!selectedId) return null;
-    return preconsults.find(
-      (p: any) => p.id === selectedId || p.preconsultId === selectedId
-    );
+    return preconsults.find((p) => p.id === selectedId) ?? null;
   }, [preconsults, selectedId]);
 
   // Sort screening tasks by urgency, then created time
@@ -115,23 +112,24 @@ export default function ClinicianPage() {
     [screeningTasks]
   );
 
-  const handleAccept = () => {
+    const handleAccept = () => {
     if (!selected) return;
 
-    const id = selected.id ?? selected.preconsultId ?? crypto.randomUUID();
-    const patientName =
-      selected.patientName || selected.name || selected.fullName || "Patient";
+    const id = selected.id;
+    const patientName = selected.patientName || "Patient";
     const urgencyLabel = getUrgencyLabelFromPreconsult(selected);
     const urgencyLower = urgencyLabel.toLowerCase();
 
     // Mark as accepted in the preconsult list
     setPreconsults((prev) =>
-      prev.map((p: any) =>
-        p === selected ? { ...p, status: "accepted" } : p
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "accepted" } : p
       )
     );
 
-    // Only create a screening task if the case is NOT routine
+    // ✅ If you *ever* add a true "routine" label and want to skip tasks, you
+    //    can keep this. Right now your mock data uses "not_urgent", so all
+    //    current cases will create tasks.
     if (urgencyLower.includes("routine")) {
       return;
     }
@@ -163,21 +161,32 @@ export default function ClinicianPage() {
     });
   };
 
+
   const handleDefer = () => {
     if (!selected) return;
 
-    const id = selected.id ?? selected.preconsultId ?? null;
-    if (!id) return;
+    const id = selected.id;
 
     // Mark as deferred in the preconsult list
     setPreconsults((prev) =>
-      prev.map((p: any) =>
-        p === selected ? { ...p, status: "deferred" } : p
+      prev.map((p) =>
+        p.id === id ? { ...p, status: "deferred" } : p
       )
     );
 
     // Remove any existing screening task for this pre-consult
     setScreeningTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  // Handle clinician note when case is deferred
+  const handleDeferNoteChange = (value: string) => {
+    if (!selectedId) return;
+
+    setPreconsults((prev) =>
+      prev.map((p) =>
+        p.id === selectedId ? { ...p, deferNote: value } : p
+      )
+    );
   };
 
   if (auth.isLoading) {
@@ -189,32 +198,38 @@ export default function ClinicianPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdf8f6]">
-      {/* Top bar to match maroon landing page */}
-      <header className="border-b border-rose-100 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-700 text-sm font-semibold text-white">
-              HC
-            </span>
-            <span className="text-base font-semibold text-slate-900">
-              HealthConnect
-            </span>
-          </div>
+  <div className="min-h-screen bg-gradient-to-b from-[var(--maroon-700)] via-[var(--maroon-500)] to-[var(--maroon-300)]">
+      {/* NAVBAR MATCHING LANDING PAGE */}
+<header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--brand-maroon)]/95 backdrop-blur">
+  <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    {/* Brand */}
+    <div
+      onClick={() => router.push("/")}
+      className="flex items-center gap-2 cursor-pointer"
+    >
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
+        ❤️
+      </span>
+      <span className="text-lg font-semibold text-white">
+        HealthConnect
+      </span>
+    </div>
 
-          <div className="flex items-center gap-3">
-            <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700">
-              Clinician view
-            </span>
-            <button
-              onClick={cognitoLogout}
-              className="text-xs font-medium text-slate-700 hover:text-rose-700"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+    {/* Clinician label + Sign out */}
+    <div className="flex items-center gap-3">
+      <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
+        Clinician view
+      </span>
+      <button
+        onClick={cognitoLogout}
+        className="text-xs font-medium text-white/80 hover:text-white"
+      >
+        Sign out
+      </button>
+    </div>
+  </div>
+</header>
+
 
       <main className="mx-auto max-w-6xl px-6 py-10 space-y-8">
         {/* Page header */}
@@ -250,15 +265,14 @@ export default function ClinicianPage() {
             </div>
 
             <div className="max-h-[430px] space-y-1 overflow-y-auto px-3 py-3">
-              {sortedPreconsults.map((p: any) => {
-                const id = p.id ?? p.preconsultId;
-                const name =
-                  p.patientName || p.name || p.fullName || "Patient";
-                const age = p.age ?? p.patientAge;
-                const summary =
-                  p.summary || p.chiefComplaint || p.presentingIssue || "";
-                const submittedAt =
-                  p.submittedAt || p.createdAt || p.timestamp || "";
+              {sortedPreconsults.map((p) => {
+                const id = p.id;
+                const name = p.patientName || "Patient";
+                const age = p.age;
+                const summary = p.summary || "";
+                const submittedAt = p.createdAt
+                  ? new Date(p.createdAt).toLocaleString()
+                  : "";
                 const urgency = getUrgencyLabelFromPreconsult(p);
                 const status = getStatusLabelFromPreconsult(p);
 
@@ -360,10 +374,7 @@ export default function ClinicianPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
-                        {selected.patientName ||
-                          selected.name ||
-                          selected.fullName ||
-                          "Patient"}
+                        {selected.patientName || "Patient"}
                         {selected.age && (
                           <span className="ml-1 text-xs font-normal text-slate-500">
                             · {selected.age}
@@ -371,10 +382,7 @@ export default function ClinicianPage() {
                         )}
                       </p>
                       <p className="text-[11px] text-slate-500">
-                        {selected.gender && `${selected.gender} · `}
-                        {(selected.primaryConcern ||
-                          selected.chiefComplaint ||
-                          "Pre-consult generated by patient intake form") as string}
+                        {"Pre-consult generated by patient intake form"}
                       </p>
                     </div>
                   </div>
@@ -384,10 +392,8 @@ export default function ClinicianPage() {
                       AI-generated summary
                     </p>
                     <p className="text-xs leading-relaxed text-slate-700">
-                      {(selected.summary ||
-                        selected.aiSummary ||
-                        selected.presentingIssue ||
-                        "No summary text provided.") as string}
+                      {selected.summary ||
+                        "No summary text provided."}
                     </p>
                   </div>
 
@@ -396,20 +402,33 @@ export default function ClinicianPage() {
                       Key details
                     </p>
                     <ul className="list-disc space-y-1 pl-4 text-xs text-slate-600">
-                      {selected.onset && (
-                        <li>Onset: {String(selected.onset)}</li>
-                      )}
-                      {selected.duration && (
-                        <li>Duration: {String(selected.duration)}</li>
-                      )}
-                      {selected.redFlags && (
-                        <li>Red flags: {String(selected.redFlags)}</li>
-                      )}
-                      {selected.history && (
-                        <li>Relevant history: {String(selected.history)}</li>
+                      {selected.details && (
+                        <li>{String(selected.details)}</li>
                       )}
                     </ul>
                   </div>
+
+                  {/* Defer note – only when case is deferred */}
+                  {getStatusLabelFromPreconsult(selected) === "deferred" && (
+  <div className="space-y-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3">
+    <p className="text-xs font-semibold text-slate-800">
+      Note to patient (this message is visible in their portal)
+    </p>
+    <p className="text-xs text-slate-700">
+      Use this space to explain why the referral was deferred and what they
+      should do next — for example, visit an urgent care clinic instead of
+      the ER, or book a routine follow-up.
+    </p>
+    <textarea
+      className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+      rows={3}
+      value={selected.deferNote ?? ""}
+      onChange={(e) => handleDeferNoteChange(e.target.value)}
+      placeholder="e.g., Based on your symptoms, we recommend visiting an urgent care clinic within the next 24–48 hours instead of the emergency department."
+    />
+  </div>
+)}
+
 
                   <div className="flex flex-wrap items-center gap-3 pt-1">
                     <button

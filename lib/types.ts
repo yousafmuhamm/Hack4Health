@@ -25,4 +25,8 @@ export type Preconsult = {
   details?: string;
   createdAt: string;
   urgency: PreconsultUrgency; // triage result from AI/patient flow
+
+  // New fields for clinician workflow
+  status?: PreconsultStatus; // "new" | "accepted" | "deferred"
+  deferNote?: string;        // clinician note sent to the patient when deferred
 };

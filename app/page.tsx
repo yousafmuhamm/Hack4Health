@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import ProfileMenu from "@/components/ProfileMenu";
 import ChatWidget from "@/components/ChatWidget";
 import { useRouter } from "next/navigation";
 
@@ -11,6 +10,7 @@ type Role = "patient" | "clinician" | "guest";
 export default function HealthConnectLanding() {
   const router = useRouter();
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   /* --------------------------
      AWS COGNITO LOGIN
@@ -96,29 +96,29 @@ export default function HealthConnectLanding() {
      UI START
   --------------------------- */
   return (
-    <main className="min-h-screen bg-white text-black">
-      <StyleAnimations />
-
+    <main className="min-h-screen bg-gradient-to-b from-[var(--maroon-700)] via-[var(--maroon-500)] to-[var(--maroon-300)] text-slate-50">
       {/* NAVBAR */}
-      <header className="sticky top-0 z-40 bg-[var(--brand-maroon)] text-white shadow-md">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--brand-maroon)]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           {/* Brand */}
           <div className="flex items-center gap-2">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
               ❤️
             </span>
-            <span className="text-lg font-semibold">HealthConnect</span>
+            <span className="text-lg font-semibold text-white">
+              HealthConnect
+            </span>
           </div>
 
           {/* Nav */}
-          <nav className="hidden md:flex gap-6 text-sm text-white/90">
-            <a href="#features" className="hover:text-white transition">
+          <nav className="hidden gap-6 text-sm text-white/90 md:flex">
+            <a href="#features" className="transition hover:text-white">
               Features
             </a>
-            <a href="#how" className="hover:text-white transition">
+            <a href="#how" className="transition hover:text-white">
               How it Works
             </a>
-            <a href="#faq" className="hover:text-white transition">
+            <a href="#faq" className="transition hover:text-white">
               FAQ
             </a>
           </nav>
@@ -126,7 +126,7 @@ export default function HealthConnectLanding() {
           {/* Buttons */}
           <button
             onClick={() => setShowRoleModal(true)}
-            className="px-4 py-2 rounded-xl bg-white text-[var(--brand-maroon)] hover:bg-slate-100 transition"
+            className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-[var(--brand-maroon)] shadow-sm transition hover:bg-slate-100"
           >
             Sign In
           </button>
@@ -134,63 +134,120 @@ export default function HealthConnectLanding() {
       </header>
 
       {/* HERO SECTION */}
-      <section className="bg-white">
-        <div className="max-w-6xl mx-auto px-4 pt-14 pb-20 grid md:grid-cols-2 gap-10">
+      <section className="px-4 pt-10 pb-16">
+        <div className="mx-auto grid max-w-6xl gap-10 rounded-3xl border border-white/10 bg-white/95 p-6 text-slate-900 shadow-xl md:grid-cols-2 lg:p-8">
           {/* LEFT */}
           <div className="max-w-[540px]">
-            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--lavender-light)] text-[var(--brand-maroon)] px-3 py-1 text-xs font-semibold">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--lavender-light)] px-3 py-1 text-xs font-semibold text-[var(--brand-maroon)]">
               ❤️ HealthConnect
             </span>
 
-            <h1 className="mt-4 text-[36px] sm:text-[46px] lg:text-[54px] font-bold leading-[1.12]">
+            <h1 className="mt-4 text-[36px] font-bold leading-[1.12] sm:text-[46px] lg:text-[54px]">
               Smarter care,
               <br /> stronger outcomes.
             </h1>
 
-            <p className="mt-4 text-[18px] leading-[1.6] text-black/70 max-w-[500px]">
+            <p className="mt-4 max-w-[500px] text-[18px] leading-[1.6] text-black/70">
               A modern digital health platform that supports patients and
               clinicians with clearer communication, structured pre-consults,
               and guided health insights — all in one place.
             </p>
 
-            <div className="mt-7 flex gap-4">
+            <ul className="mt-4 space-y-1 text-sm text-slate-700">
+              <li>
+                • Patients only need to share their story once — clearly and in
+                their own words.
+              </li>
+              <li>
+                • Every pre-consult is carefully reviewed by a real clinician
+                before any referral decisions are made.
+              </li>
+              <li>
+                • If your case is deferred, you receive a clear note with
+                concrete next steps, so you&apos;re never left guessing.
+              </li>
+            </ul>
+
+            <div className="mt-7 flex flex-wrap gap-4">
               <button
                 onClick={() => setShowRoleModal(true)}
-                className="px-8 h-[52px] rounded-[40px] bg-[var(--brand-maroon)] text-white hover:bg-[var(--brand-maroon-dark)] transition font-semibold shadow-sm"
+                className="h-[52px] rounded-[40px] bg-[var(--brand-maroon)] px-8 font-semibold text-white shadow-sm transition hover:bg-[var(--brand-maroon-dark)]"
               >
                 Get Started
               </button>
 
               <Link
                 href="/education"
-                className="px-8 h-[52px] grid place-items-center rounded-[40px] border border-[var(--lavender)] text-[var(--brand-maroon)] hover:bg-[var(--lavender-light)] transition font-semibold"
+                className="grid h-[52px] place-items-center rounded-[40px] border border-[var(--lavender)] px-8 font-semibold text-[var(--brand-maroon)] transition hover:bg-[var(--lavender-light)]"
               >
                 Health Education
               </Link>
             </div>
           </div>
 
-          {/* RIGHT — Small highlight box */}
+          {/* RIGHT — Patient & clinician feedback */}
           <div className="self-start">
-            <div className="rounded-[24px] border border-black/10 bg-white p-6 shadow-lg">
-              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--lavender-light)] text-[var(--brand-maroon)] px-3 py-1 text-xs font-semibold">
-                ⭐ Patient Feedback
+            <div className="space-y-4 rounded-[24px] border border-black/10 bg-white p-6 shadow-lg">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--lavender-light)] px-3 py-1 text-xs font-semibold text-[var(--brand-maroon)]">
+                ⭐ Patient & clinician feedback
               </span>
 
-              <p className="mt-3 text-[18px] leading-[1.6] text-[#111]">
-                “The pre-consult form made my visit smoother. My doctor knew my
-                symptoms before I even arrived.”
-              </p>
+              <div className="space-y-3 text-[14px] leading-[1.6] text-[#111]">
+                <p>
+                  “The pre-consult form made my visit smoother. My doctor knew
+                  my symptoms before I even arrived.”
+                </p>
+                <div className="text-[12px] text-[#777]">— Sarah M., patient</div>
 
-              <div className="mt-3 text-[13px] text-[#777]">— Sarah M.</div>
+                <hr className="border-dashed border-slate-200" />
+
+                <p>
+                  “I felt less anxious walking into my appointment because I had
+                  already written everything down. My doctor could focus on what
+                  to do next instead of trying to piece my story together.”
+                </p>
+                <div className="text-[12px] text-[#777]">
+                  — Daniel R., patient
+                </div>
+
+                <hr className="border-dashed border-slate-200" />
+
+                <p>
+                  “Instead of spending the whole appointment trying to understand
+                  the story, I can go straight to decisions and next steps.”
+                </p>
+                <div className="text-[12px] text-[#777]">
+                  — Dr. L. Ahmed, family physician
+                </div>
+
+                <hr className="border-dashed border-slate-200" />
+
+                <p>
+                  “Having a clear summary before I walk into the room makes it
+                  easier to stay present with each patient, instead of
+                  scrambling through notes.”
+                </p>
+                <div className="text-[12px] text-[#777]">
+                  — Dr. S. Patel, family physician
+                </div>
+
+                <hr className="border-dashed border-slate-200" />
+
+                <p className="text-[13px] text-slate-700">
+                  If your case isn&apos;t appropriate for a referral, your
+                  clinician can send a short note with concrete next steps
+                  (e.g., urgent care vs routine follow-up), so you&apos;re never
+                  left guessing.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="border-t bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-14">
+      <section id="features" className="px-4 pb-12">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-white/10 bg-white/95 p-6 text-slate-900 shadow-lg lg:p-8">
           <h2 className="text-2xl font-semibold text-[var(--brand-maroon)]">
             Why HealthConnect?
           </h2>
@@ -198,7 +255,7 @@ export default function HealthConnectLanding() {
             Tools to support safer and more efficient care.
           </p>
 
-          <div className="mt-8 grid md:grid-cols-3 gap-6">
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
             <Feature
               icon="📝"
               title="Structured Pre-Consults"
@@ -219,13 +276,13 @@ export default function HealthConnectLanding() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how" className="border-t bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-14">
+      <section id="how" className="px-4 pb-12">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-white/10 bg-white/95 p-6 text-slate-900 shadow-lg lg:p-8">
           <h2 className="text-2xl font-semibold text-[var(--brand-maroon)]">
             How it Works
           </h2>
 
-          <div className="mt-6 grid md:grid-cols-3 gap-6 text-slate-700">
+          <div className="mt-6 grid gap-6 text-slate-700 md:grid-cols-3">
             <Step
               n={1}
               title="Pick your role"
@@ -239,15 +296,15 @@ export default function HealthConnectLanding() {
             <Step
               n={3}
               title="Support your care"
-              desc="Clinicians receive summaries and screening tasks to improve visits."
+              desc="Clinicians review your case, accept or defer it, and can send a note with clear next steps."
             />
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="border-t bg-slate-50">
-        <div className="max-w-4xl mx-auto px-4 py-14">
+      <section id="faq" className="px-4 pb-10">
+        <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/95 p-6 text-slate-900 shadow-lg lg:p-8">
           <h2 className="text-2xl font-semibold text-[var(--brand-maroon)]">
             Frequently Asked Questions
           </h2>
@@ -286,8 +343,8 @@ export default function HealthConnectLanding() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-600">
+      <footer className="border-t border-white/10 bg-black/20">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-200 md:flex-row">
           <p>© {new Date().getFullYear()} HealthConnect</p>
           <div className="flex items-center gap-6">
             <a href="#">Privacy</a>
@@ -299,9 +356,9 @@ export default function HealthConnectLanding() {
 
       {/* ROLE SELECT MODAL */}
       {showRoleModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-[var(--brand-maroon)] p-7 rounded-2xl w-[90%] max-w-xl relative text-white shadow-xl animate-fadeIn">
-            <h2 className="text-2xl font-semibold mb-5">
+        <div className="modal-scrim fixed inset-0 z-50 flex items-center justify-center">
+          <div className="modal-panel relative w-[90%] max-w-xl rounded-2xl p-7 shadow-xl animate-fadeIn">
+            <h2 className="mb-5 text-2xl font-semibold text-white">
               Who are you using this tool as?
             </h2>
 
@@ -330,7 +387,7 @@ export default function HealthConnectLanding() {
 
             <button
               onClick={() => setShowRoleModal(false)}
-              className="absolute top-3 right-4 text-white/70 hover:text-white text-xl"
+              className="absolute right-4 top-3 text-xl text-white/70 hover:text-white"
             >
               ×
             </button>
@@ -338,7 +395,34 @@ export default function HealthConnectLanding() {
         </div>
       )}
 
-      <ChatWidget />
+      {/* Floating CareQuest AI button */}
+      <button
+        onClick={() => setShowChat(true)}
+        className="fixed bottom-4 right-4 z-40 rounded-full bg-[var(--brand-maroon)] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-lg hover:bg-[var(--brand-maroon-dark)]"
+      >
+        CareQuest AI
+      </button>
+
+      {/* CareQuest AI popup (bottom-right) */}
+      {showChat && (
+        <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm rounded-3xl border border-[var(--lavender-400)] bg-[var(--popup-bg)]/95 shadow-2xl shadow-black/50 backdrop-blur-md overflow-hidden">
+          {/* Header with single CareQuest AI label */}
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-100">
+              CareQuest AI
+            </span>
+            <button
+              onClick={() => setShowChat(false)}
+              className="text-lg leading-none text-slate-300 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Chat content – now just one box total */}
+          <ChatWidget variant="popup" />
+        </div>
+      )}
     </main>
   );
 }
@@ -356,9 +440,9 @@ function Feature({
   desc: string;
 }) {
   return (
-    <div className="rounded-2xl border p-5 bg-white shadow-sm hover:shadow-md hover:-translate-y-[2px] transition">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-[2px] hover:shadow-md">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 grid place-items-center rounded-xl bg-[var(--lavender-light)] text-[var(--brand-maroon)] text-lg">
+        <div className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--lavender-light)] text-lg text-[var(--brand-maroon)]">
           {icon}
         </div>
         <h3 className="font-semibold text-slate-800">{title}</h3>
@@ -381,39 +465,14 @@ function Step({
   desc: string;
 }) {
   return (
-    <div className="rounded-2xl border bg-white p-5 hover:bg-slate-50 transition">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 transition hover:bg-slate-50">
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 grid place-items-center rounded-lg bg-[var(--brand-maroon)] text-white text-sm font-semibold">
+        <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--brand-maroon)] text-sm font-semibold text-white">
           {n}
         </div>
         <h3 className="font-semibold text-slate-800">{title}</h3>
       </div>
       <p className="mt-2 text-sm text-slate-600">{desc}</p>
     </div>
-  );
-}
-
-/* --------------------------
-   ANIMATIONS
---------------------------- */
-function StyleAnimations() {
-  return (
-    <style>{`
-      :root {
-        --brand-maroon: #6a1b1a;
-        --brand-maroon-dark: #4a1a1a;
-        --lavender: #c8b6ff;
-        --lavender-light: #f3edff;
-      }
-
-      .animate-fadeIn {
-        animation: fadeIn .25s ease-out;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: scale(.97); }
-        to { opacity: 1; transform: scale(1); }
-      }
-    `}</style>
   );
 }

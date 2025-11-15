@@ -10,7 +10,7 @@ import ChatWidget from "@/components/ChatWidget";
 import { SymptomInput, TriageResult } from "@/lib/types";
 import { getTriageResult } from "@/lib/triage";
 import { cognitoLogout } from "@/app/utils/logout";
-
+import Link from "next/link";
 
 // Shared AWS login helper (kept for future use if needed)
 function buildLoginUrl(role: "patient" | "clinician") {
@@ -40,7 +40,6 @@ export default function PatientPage() {
   const email =
     (auth.user?.profile?.email as string | undefined) ?? "patient@example.com";
 
-
   // Load saved medical history from localStorage
   useEffect(() => {
     try {
@@ -69,6 +68,20 @@ export default function PatientPage() {
 
   return (
     <>
+      {/* NAVBAR – MAROON, MATCHES REST OF APP */}
+      <header className="border-b border-white/10 bg-[var(--maroon-700)]">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--maroon-700)] font-bold">
+              ❤️
+            </span>
+            <span className="text-lg font-semibold text-white">
+              HealthConnect
+            </span>
+          </Link>
+        </div>
+      </header>
+
       <div className="min-h-screen bg-gradient-to-b from-[var(--maroon-700)] via-[var(--maroon-500)] to-[var(--maroon-300)]">
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-10 text-slate-50">
           {/* Top bar: hero + profile */}
@@ -106,7 +119,6 @@ export default function PatientPage() {
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lavender-400)] text-[var(--maroon-700)] text-xs font-semibold">
                   {email?.[0]?.toUpperCase() ?? "P"}
                 </span>
-                {/* Label clearly says Profile */}
                 <span className="hidden md:block text-xs font-medium">
                   Profile
                 </span>
@@ -131,14 +143,12 @@ export default function PatientPage() {
                   >
                     Medical history
                   </button>
-                  {/* New: Sign out button in dropdown */}
                   <button
-  onClick={cognitoLogout}
-  className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
->
-  Sign out
-</button>
-
+                    onClick={cognitoLogout}
+                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
@@ -158,7 +168,6 @@ export default function PatientPage() {
 
               {/* RIGHT: Symptom form + results */}
               <div className="space-y-4">
-                {/* 🔧 UPDATED: background matches CareQuest AI box */}
                 <div className="rounded-3xl border border-[var(--lavender-400)] bg-[var(--popup-bg)]/95 p-5 shadow-2xl shadow-black/40 text-slate-50">
                   <h3 className="mb-2 text-base font-semibold">
                     Describe your symptoms
@@ -195,7 +204,7 @@ export default function PatientPage() {
         </div>
       </div>
 
-      {/* Medical history sidebar (unchanged behavior, just still here) */}
+      {/* Medical history sidebar */}
       {showHistory && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm">
           <div className="flex h-full w-full max-w-md flex-col bg-[var(--lavender-50)] shadow-2xl">

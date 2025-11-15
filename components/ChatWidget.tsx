@@ -15,12 +15,19 @@ const EXAMPLE_PROMPTS = [
 
 interface ChatWidgetProps {
   medicalHistory?: string;
+  // NEW: how it's being used
+  variant?: "inline" | "popup";
 }
 
-export default function ChatWidget({ medicalHistory = "" }: ChatWidgetProps) {
+export default function ChatWidget({
+  medicalHistory = "",
+  variant = "inline",
+}: ChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isPopup = variant === "popup";
 
   const sendToApi = async (nextMessages: Message[]) => {
     const res = await fetch("/api/chat", {
@@ -111,12 +118,26 @@ export default function ChatWidget({ medicalHistory = "" }: ChatWidgetProps) {
     setInput(prompt);
   };
 
+  // Slightly smaller chat body in popup so everything fits
+  const chatBodyHeightClass = isPopup ? "h-[220px]" : "h-[260px]";
+
   return (
-    <section className="rounded-3xl border border-[var(--lavender-400)] bg-[var(--popup-bg)]/95 p-5 shadow-2xl shadow-black/40 text-slate-50">
+    <section
+      className={
+        isPopup
+          ? // popup: NO inner card, just padding + text colour
+            "p-4 text-slate-50"
+          : // inline (patient page): full card with border + bg + shadow
+            "rounded-3xl border border-[var(--lavender-400)] bg-[var(--popup-bg)]/95 p-5 shadow-2xl shadow-black/40 text-slate-50"
+      }
+    >
       <header className="mb-4 space-y-1">
-        <span className="inline-flex items-center rounded-full bg-[var(--maroon-500)]/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
-          CareQuest AI
-        </span>
+        {/* Only show CareQuest AI pill in inline version (patient page) */}
+        {!isPopup && (
+          <span className="inline-flex items-center rounded-full bg-[var(--maroon-500)]/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide">
+            CareQuest AI
+          </span>
+        )}
         <h3 className="text-lg font-semibold">
           Ask about your symptoms &amp; care options
         </h3>
@@ -143,7 +164,9 @@ export default function ChatWidget({ medicalHistory = "" }: ChatWidgetProps) {
       </div>
 
       {/* Chat body */}
-      <div className="flex h-[260px] flex-col rounded-2xl border border-slate-800 bg-black/30">
+      <div
+        className={`flex ${chatBodyHeightClass} flex-col rounded-2xl border border-slate-800 bg-black/30`}
+      >
         <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3 text-xs">
           {messages.length === 0 && !loading && (
             <p className="text-[11px] text-slate-300">
