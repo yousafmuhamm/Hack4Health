@@ -1,215 +1,271 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-
-type SymptomEntry = {
-  id: string;
-  label: string;
-  everyday: string;
-  clinical: string;
-  why: string;
-  tags: string[];
-};
-
-const ENTRIES: SymptomEntry[] = [
-  {
-    id: "chest-pain-exertion",
-    label: "Chest discomfort with activity",
-    everyday: "My chest feels weird or tight when I walk or climb stairs.",
-    clinical:
-      "I get a tight, squeezing discomfort in the centre of my chest when I walk or climb stairs. It usually improves after I rest for a few minutes.",
-    why: "Describing what triggers it (walking, stairs), where it is (centre of chest), and what makes it better (rest) gives your clinician much clearer information than just saying 'chest pain'.",
-    tags: ["chest pain", "breathless", "heart"],
-  },
-  {
-    id: "shortness-breath",
-    label: "Shortness of breath",
-    everyday: "I feel out of breath a lot.",
-    clinical:
-      "Over the past few days, I have been getting short of breath with light activity, like walking across a room. I sometimes need to pause to catch my breath. I do not usually feel this way.",
-    why: "Mentioning how long it has been happening and what level of activity causes it helps your clinician judge how urgent this might be.",
-    tags: ["breathing", "lungs"],
-  },
-  {
-    id: "headache-sudden",
-    label: "Sudden severe headache",
-    everyday: "I had the worst headache of my life.",
-    clinical:
-      "Earlier today, I developed a sudden, very severe headache that reached full intensity within a minute. It is different from my usual headaches or migraines.",
-    why: "For headaches, timing and how different it feels from your usual pattern are important for identifying red flags.",
-    tags: ["headache", "neurology"],
-  },
-  {
-    id: "abdominal-pain",
-    label: "Abdominal pain",
-    everyday: "My stomach has really been hurting.",
-    clinical:
-      "For the last 24 hours, I have had a constant cramping pain in the lower right side of my abdomen. It gets worse when I move or cough. I feel a bit nauseated but have not vomited.",
-    why: "Location, timing, and what makes pain better or worse help narrow down possible causes.",
-    tags: ["stomach", "abdomen"],
-  },
-  {
-    id: "mood-low",
-    label: "Low mood and lack of interest",
-    everyday: "I just feel off and not like myself.",
-    clinical:
-      "For the past few weeks, I have felt low most days and have lost interest in activities I usually enjoy. My sleep and appetite have changed, and it is harder to get things done.",
-    why: "Giving a time frame and specific changes (sleep, appetite, interest) helps your clinician understand how your mood is affecting daily life.",
-    tags: ["mental health", "mood"],
-  },
-  {
-    id: "rash",
-    label: "New skin rash",
-    everyday: "I got a random rash.",
-    clinical:
-      "I developed a red, itchy rash on both arms two days ago. It started after I used a new soap. There are no blisters, and I do not have a fever.",
-    why: "Describing when the rash started, where it is on your body, what it looks like, and any possible triggers is more helpful than just saying 'rash'.",
-    tags: ["skin", "rash"],
-  },
-  {
-    id: "urinary",
-    label: "Burning with urination",
-    everyday: "It hurts when I pee.",
-    clinical:
-      "Since yesterday, I have had burning when I urinate and feel the urge to go more often, with only small amounts each time. There is no blood that I can see.",
-    why: "Including timing and associated symptoms (frequency, urgency, blood) helps point toward or away from a urinary infection.",
-    tags: ["urine", "infection"],
-  },
-];
+import { useMemo, useState } from "react";
+import Link from "next/link";
 
 export default function EducationPage() {
   const [query, setQuery] = useState("");
 
-  const filtered = useMemo(() => {
+  const filteredSymptoms = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return ENTRIES;
-    return ENTRIES.filter((entry) => {
-      const haystack =
-        `${entry.label} ${entry.everyday} ${entry.clinical} ${entry.tags.join(
-          " "
-        )}`.toLowerCase();
-      return haystack.includes(q);
-    });
+    if (!q) return symptoms;
+
+    return symptoms.filter((s) =>
+      [s.title, s.tags, s.casual, s.clinical, s.reason].some((field) =>
+        field.toLowerCase().includes(q)
+      )
+    );
   }, [query]);
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
-        {/* Header */}
-        <section className="space-y-3">
-          <p className="text-xs uppercase tracking-wide text-slate-500">
-            Health education
-          </p>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-            Symptom phrasing guide
-          </h1>
-          <p className="max-w-2xl text-sm md:text-base text-slate-800">
-            This page helps you turn everyday language into descriptions that
-            are easier for clinicians to understand. You don&apos;t need to know
-            medical terms—just focus on{" "}
-            <span className="font-semibold">
-              when it started, where it is, what it feels like, what makes it
-              better or worse, and how it affects your day.
+    <main className="min-h-screen bg-white text-black">
+      <StyleVariables />
+
+      {/* NAVBAR */}
+      <header className="sticky top-0 z-40 bg-[var(--brand-maroon)] text-white shadow-md">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Brand */}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
+              ❤️
             </span>
-          </p>
-          <p className="text-xs text-slate-500 max-w-xl">
-            This information is for education only and does not replace
-            professional medical advice, diagnosis, or emergency care.
-          </p>
-        </section>
-
-        {/* Search */}
-        <section className="space-y-2">
-          <label
-            htmlFor="symptom-search"
-            className="text-sm font-medium text-slate-800"
-          >
-            Search by symptom or keyword
-          </label>
-          <input
-            id="symptom-search"
-            type="text"
-            className="w-full max-w-md rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
-            placeholder="e.g. chest pain, headache, rash, mood…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <p className="text-xs text-slate-500">
-            Try searching for a symptom or body part and see examples of how you
-            might describe it during a visit.
-          </p>
-        </section>
-
-        {/* Dictionary entries */}
-        <section className="space-y-4">
-          {filtered.length === 0 && (
-            <p className="text-sm text-slate-600">
-              No examples found for that search yet. Try a more general symptom
-              like <span className="italic">pain</span>,{" "}
-              <span className="italic">breathing</span>, or{" "}
-              <span className="italic">mood</span>.
-            </p>
-          )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {filtered.map((entry) => (
-              <article
-                key={entry.id}
-                className="rounded-2xl border border-slate-200 bg-slate-900 text-slate-100 p-4 flex flex-col gap-3"
-              >
-                <header>
-                  <h2 className="text-sm font-semibold text-slate-50">
-                    {entry.label}
-                  </h2>
-                  {entry.tags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {entry.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center rounded-full bg-slate-800 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-300"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </header>
-
-                <div className="space-y-2 text-xs">
-                  <div>
-                    <div className="font-semibold text-slate-200">
-                      How people often say it
-                    </div>
-                    <p className="text-slate-200">{entry.everyday}</p>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-slate-200">
-                      How you could say it to your doctor
-                    </div>
-                    <p className="text-slate-100">{entry.clinical}</p>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-slate-200">
-                      Why this helps
-                    </div>
-                    <p className="text-slate-300">{entry.why}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
+            <span className="text-lg font-semibold">HealthConnect</span>
           </div>
-        </section>
 
-        {/* Footer note */}
-        <section className="pt-4 border-t border-slate-200">
-          <p className="text-xs text-slate-500 max-w-2xl">
-            These examples are not scripts you must follow. They are meant to
-            give you ideas for the kind of detail that can help your clinician
-            understand what you&apos;re experiencing and decide on the safest
-            next steps.
-          </p>
-        </section>
-      </div>
+          {/* Back button */}
+          <Link
+            href="/"
+            className="px-4 py-2 rounded-xl bg-white text-[var(--brand-maroon)] hover:bg-slate-100 transition text-sm font-medium"
+          >
+            ← Back to Home
+          </Link>
+        </div>
+      </header>
+
+      {/* CONTENT */}
+      <section className="max-w-5xl mx-auto px-4 py-14">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--brand-maroon)]">
+          Health Education
+        </h2>
+
+        <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          Symptom phrasing guide
+        </h1>
+
+        <p className="mt-3 text-[15px] text-slate-600 leading-relaxed max-w-3xl">
+          This page helps you turn everyday language into descriptions that are
+          easier for clinicians to understand. You don’t need to know medical
+          terms—just focus on when it <strong>started</strong>, where it{" "}
+          <strong>is</strong>, what it <strong>feels like</strong>, what makes
+          it <strong>better or worse</strong>, and how it{" "}
+          <strong>affects your day</strong>.
+        </p>
+
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by symptom or keyword (e.g. chest pain, headache, rash, weight loss...)"
+          className="mt-8 w-full rounded-[14px] border border-slate-200 px-5 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-maroon)]"
+        />
+
+        {/* GRID */}
+        <div className="mt-10">
+          {filteredSymptoms.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              No examples match “<span className="font-semibold">{query}</span>
+              ”. Try a different word like “pain”, “rash”, “breath”, or “sleep”.
+            </p>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-8">
+              {filteredSymptoms.map((symptom, index) => (
+                <div
+                  key={index}
+                  className="rounded-2xl bg-slate-900 text-white px-6 py-5 shadow-md"
+                >
+                  <h3 className="text-lg font-semibold">{symptom.title}</h3>
+                  <div className="mt-1 text-[11px] uppercase tracking-wide text-slate-300">
+                    {symptom.tags}
+                  </div>
+
+                  <p className="mt-4 text-sm leading-relaxed">
+                    <strong>How people often say it:</strong> <br />
+                    {symptom.casual}
+                  </p>
+
+                  <p className="mt-4 text-sm leading-relaxed">
+                    <strong>How you could phrase it to your doctor:</strong>{" "}
+                    <br />
+                    {symptom.clinical}
+                  </p>
+
+                  <p className="mt-4 text-sm leading-relaxed">
+                    <strong>Why this helps:</strong> <br />
+                    {symptom.reason}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* FOOTNOTE */}
+        <p className="mt-10 text-[12px] text-slate-500 max-w-2xl">
+          These examples are not scripts you must follow. They are meant to give
+          you ideas for the kind of detail that can help your clinician
+          understand what you’re experiencing and decide on the safest next
+          steps.
+        </p>
+      </section>
     </main>
   );
 }
+
+/* --------------------------
+   STYLE VARIABLES
+--------------------------- */
+function StyleVariables() {
+  return (
+    <style>{`
+      :root {
+        --brand-maroon: #6a1b1a;
+        --brand-maroon-dark: #4a1a1a;
+        --lavender: #c8b6ff;
+        --lavender-light: #f3edff;
+      }
+    `}</style>
+  );
+}
+
+/* --------------------------
+   SYMPTOM DATA
+--------------------------- */
+const symptoms = [
+  {
+    title: "Chest discomfort with activity",
+    tags: "CHEST PAIN • BREATHLESSNESS • HEART",
+    casual:
+      "I have chest pain when I go up stairs. It feels tight when I walk or climb stairs.",
+    clinical:
+      "I get a tight, squeezing pressure in the center of my chest whenever I walk or climb stairs. It usually improves after I rest for a few minutes.",
+    reason:
+      "This helps highlight triggers, location, and timing which gives your clinician more information than just saying 'chest pain'.",
+  },
+  {
+    title: "Shortness of breath",
+    tags: "BREATHING • ACTIVITY",
+    casual: "I feel out of breath easily.",
+    clinical:
+      "Over the last 2 months I’ve started getting short of breath with light activity, like walking from my car. Sometimes I need to pause to catch my breath.",
+    reason:
+      "This shows how long it has been happening and what level of activity causes it.",
+  },
+  {
+    title: "Sudden severe headache",
+    tags: "HEADACHE • NEUROLOGY",
+    casual: "Worst headache of my life.",
+    clinical:
+      "I had a sudden, severe headache that reached its worst intensity within a minute. It’s different from my usual headaches.",
+    reason:
+      "Sudden onset and 'worst ever' are important red flags for clinicians.",
+  },
+  {
+    title: "Abdominal pain",
+    tags: "STOMACH • ABDOMEN",
+    casual: "I have deep pain that keeps hurting.",
+    clinical:
+      "For the past 3 days I’ve had constant cramping pain in the lower right side of my abdomen. It worsens when I move or cough.",
+    reason:
+      "Location, timing, and what makes pain better/worse helps narrow diagnosis.",
+  },
+  {
+    title: "Low mood and lack of interest",
+    tags: "MENTAL HEALTH • MOOD",
+    casual: "I just feel off and not like myself.",
+    clinical:
+      "For the past 6 weeks I’ve had low mood most days and have lost interest in activities I normally enjoy. I’ve also been more tired than usual.",
+    reason:
+      "Duration, impact on functioning, and previous mood shifts are key clinical details.",
+  },
+  {
+    title: "New skin rash",
+    tags: "SKIN • IRRITATION",
+    casual: "I got a rash a few weeks ago.",
+    clinical:
+      "I developed a red, itchy rash 3 weeks ago on my torso. It started after using a new detergent. It hasn’t gone away and I don’t have a fever.",
+    reason:
+      "Explains onset, appearance, triggers, and duration — more helpful than 'I have a rash'.",
+  },
+  {
+    title: "Burning with urination",
+    tags: "URINE • INFECTION",
+    casual: "It hurts when I pee.",
+    clinical:
+      "Since yesterday I’ve had burning when urinating and feel the urge to go more often. The urine looks cloudy. There is no blood that I’ve noticed.",
+    reason:
+      "Symptom clarity plus associated findings helps clinicians assess infection risk.",
+  },
+  {
+    title: "Swelling in legs or ankles",
+    tags: "SWELLING • FLUID • LEGS",
+    casual: "My feet and ankles are puffy by the end of the day.",
+    clinical:
+      "For the past month my ankles and lower legs have been noticeably swollen by the evening. The swelling improves overnight but comes back by the end of the day, especially if I’ve been standing a lot.",
+    reason:
+      "Describing location, timing, and what makes swelling better or worse helps your clinician think about circulation, fluid balance, and heart or kidney causes.",
+  },
+  {
+    title: "Racing or irregular heartbeat",
+    tags: "HEART • PALPITATIONS",
+    casual: "Sometimes my heart just starts racing out of nowhere.",
+    clinical:
+      "A few times a week I suddenly feel my heart pounding fast and irregular for a few minutes, even when I’m resting. I sometimes feel lightheaded when it happens but I haven’t fainted.",
+    reason:
+      "Noting frequency, duration, and associated symptoms (like lightheadedness) is more useful than just saying 'palpitations'.",
+  },
+  {
+    title: "Persistent cough",
+    tags: "COUGH • LUNGS",
+    casual: "I’ve had a cough that just won’t go away.",
+    clinical:
+      "I’ve had a dry cough for about 5 weeks. It’s worse at night and when I lie flat. I don’t have a fever, but I sometimes feel a mild tightness in my chest when I cough a lot.",
+    reason:
+      "Duration, type of cough (dry vs. phlegmy), timing, and triggers help differentiate infections, asthma, reflux, or other causes.",
+  },
+  {
+    title: "Dizziness when standing up",
+    tags: "DIZZINESS • BLOOD PRESSURE",
+    casual: "I get dizzy when I stand up too fast.",
+    clinical:
+      "For the past 2 weeks I’ve felt lightheaded for a few seconds whenever I stand up from sitting or lying down. It usually passes quickly, but once I had to sit back down so I wouldn’t fall.",
+    reason:
+      "Connecting the symptom to position changes and describing how long it lasts helps your clinician consider blood pressure and circulation issues.",
+  },
+  {
+    title: "Joint pain and morning stiffness",
+    tags: "JOINTS • PAIN • STIFFNESS",
+    casual: "My hands and knees are always sore, especially in the morning.",
+    clinical:
+      "For the last 3 months I’ve had aching and stiffness in both hands and knees. It’s worst in the morning and takes about an hour of moving around before it loosens up.",
+    reason:
+      "Mentioning which joints are involved, how long stiffness lasts, and how long it’s been going on helps distinguish between different types of arthritis.",
+  },
+  {
+    title: "Trouble falling or staying asleep",
+    tags: "SLEEP • INSOMNIA",
+    casual: "I just can’t sleep properly lately.",
+    clinical:
+      "For about 6 weeks I’ve had trouble falling asleep, sometimes lying awake for over an hour. I wake up 2–3 times most nights and feel unrefreshed in the morning, even on weekends.",
+    reason:
+      "Detailing how long it’s been happening, how often you wake up, and how it affects your days gives a clearer picture than only saying 'I have insomnia'.",
+  },
+  {
+    title: "Unintentional weight loss",
+    tags: "WEIGHT CHANGE • APPETITE",
+    casual: "I’ve lost weight without really trying.",
+    clinical:
+      "Over the last 3 months I’ve lost about 10 pounds without changing my diet or exercise. My clothes fit looser and I’ve noticed a slightly decreased appetite.",
+    reason:
+      "Quantifying how much weight you’ve lost and over what time period, plus appetite changes, helps your clinician judge how significant the weight loss is.",
+  },
+];
