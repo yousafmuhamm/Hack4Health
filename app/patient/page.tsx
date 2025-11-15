@@ -8,10 +8,10 @@ import TriageResultCard from "@/components/TriageResultCard";
 import LocationSection from "@/components/LocationSection";
 import ChatWidget from "@/components/ChatWidget";
 import { SymptomInput, TriageResult } from "@/lib/types";
-import { getTriageResult } from "@/lib/triage"; // not needed if using /api/triage
+//import { getTriageResult } from "@/lib/triage"; // not needed if using /api/triage
 import { cognitoLogout } from "@/app/utils/logout";
 import Link from "next/link";
-import { saveConsultation } from "@/lib/db"; // optional if you want logging later
+//import { saveConsultation } from "@/lib/db"; // optional if you want logging later
 
 // (Optional) kept in case you reuse it later
 function buildLoginUrl(role: "patient" | "clinician") {
@@ -180,11 +180,7 @@ export default function PatientPage() {
                   >
                     Sign out
                   </button>
-                    onClick={cognitoLogout}
-                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
-                  >
-                    Sign out
-                  </button>
+                   
                 </div>
               )}
             </div>
