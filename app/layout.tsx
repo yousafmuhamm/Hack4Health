@@ -18,10 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={spaceGrotesk.variable}>
-        {/* Wrap the entire app with Cognito OIDC Provider */}
-        <OIDCProvider>
-          {children}
-        </OIDCProvider>
+        <OIDCProvider>{children}</OIDCProvider>
       </body>
     </html>
   );

@@ -36,7 +36,7 @@ body{
 
 button{ transition:all .2s ease }
 
-/* ---------- utilities you use in TSX ---------- */
+/* ---------- shared UI utilities ---------- */
 .theme-card{
   background:linear-gradient(180deg, #140b13 0%, #0f0a11 100%);
   border:1px solid var(--ring);
@@ -58,6 +58,43 @@ button{ transition:all .2s ease }
   color:#fff;
 }
 .btn-secondary:hover{ filter:brightness(1.05) }
+
+/* New: primary buttons used on patient page */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:0.4rem;
+  padding:0.55rem 1.15rem;
+  border-radius:999px;
+  font-size:0.9rem;
+  font-weight:500;
+  border:1px solid transparent;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all .18s ease;
+}
+
+.btn-maroon{
+  background:var(--maroon-500);
+  color:#ffffff;
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
+.btn-maroon:hover{
+  background:var(--maroon-700);
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px rgba(0,0,0,.45);
+}
+
+.btn-outline-lavender{
+  background:rgba(255,255,255,0.04);
+  color:#fdfbff;
+  border-color:var(--lavender-400);
+}
+.btn-outline-lavender:hover{
+  background:var(--lavender-200);
+  color:#201821;
+}
 
 /* modal bg and glass */
 .modal-scrim{
