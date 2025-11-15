@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import { useRouter } from "next/navigation";
-import { mockPreconsults } from "@/lib/mockData";
 import { cognitoLogout } from "@/app/utils/logout";
 import type { Preconsult } from "@/lib/types";
+import {
+  fetchPreconsults,
+  updatePreconsultStatus,
+} from "@/lib/db";
 
 type ScreeningTask = {
   id: string;
@@ -20,19 +23,18 @@ type ScreeningTask = {
 // Helper: get urgency label from a pre-consult object
 const getUrgencyLabelFromPreconsult = (p: any): string => {
   return (
-    p.urgencyLabel ||
     p.urgency ||
+    p.urgencyLabel ||
     p.triageLevel ||
     p.urgency_level ||
-    "Routine"
+    "routine"
   );
 };
 
 // Helper: convert an urgency label into a numeric score (lower = more urgent)
 const getUrgencyScoreFromLabel = (raw: any): number => {
   const label = String(raw).toLowerCase();
-
-  if (label.includes("very")) return 1; // VERY URGENT
+  if (label.includes("very")) return 1; // VERY_URGENT
   if (label.includes("mild") || label.includes("moderate")) return 2;
   return 3; // routine / unknown
 };
@@ -44,7 +46,7 @@ const getStatusLabelFromPreconsult = (
   const raw = (p.status || "").toString().toLowerCase();
   if (raw === "accepted") return "accepted";
   if (raw === "deferred") return "deferred";
-  return "pending"; // "new" or undefined
+  return "pending";
 };
 
 // Shared comparator for tasks: urgency, then created time
@@ -53,7 +55,6 @@ const compareTasks = (a: ScreeningTask, b: ScreeningTask) => {
     getUrgencyScoreFromLabel(a.urgency) -
     getUrgencyScoreFromLabel(b.urgency);
   if (scoreDiff !== 0) return scoreDiff;
-
   // Same urgency → newer first
   return b.createdAtMs - a.createdAtMs;
 };
@@ -62,21 +63,47 @@ export default function ClinicianPage() {
   const auth = useAuth();
   const router = useRouter();
 
-  const [preconsults, setPreconsults] = useState<Preconsult[]>(
-    () => mockPreconsults ?? []
-  );
+  const [preconsults, setPreconsults] = useState<Preconsult[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
+  const [loadingPreconsults, setLoadingPreconsults] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // TEMP: do NOT redirect at all – just log what we see
+  // Load from Firestore when page mounts
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await fetchPreconsults();
+        if (!cancelled) {
+          setPreconsults(data);
+          if (!selectedId && data.length > 0) {
+            setSelectedId(data[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading preconsults:", err);
+        if (!cancelled) {
+          setLoadError("Could not load pre-consults.");
+        }
+      } finally {
+        if (!cancelled) setLoadingPreconsults(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  // TEMP: just log auth info
   useEffect(() => {
     if (auth.isLoading) return;
-
     const role =
       typeof window !== "undefined"
         ? sessionStorage.getItem("loginRole")
         : null;
-
     console.log(
       "Clinician guard debug => isAuthenticated:",
       auth.isAuthenticated,
@@ -85,7 +112,7 @@ export default function ClinicianPage() {
     );
   }, [auth.isLoading, auth.isAuthenticated]);
 
-  // Pick first item by default
+  // Pick first item by default when preconsults change
   useEffect(() => {
     if (!selectedId && preconsults.length > 0) {
       setSelectedId(preconsults[0].id);
@@ -112,7 +139,7 @@ export default function ClinicianPage() {
     [screeningTasks]
   );
 
-    const handleAccept = () => {
+  const handleAccept = async () => {
     if (!selected) return;
 
     const id = selected.id;
@@ -120,16 +147,21 @@ export default function ClinicianPage() {
     const urgencyLabel = getUrgencyLabelFromPreconsult(selected);
     const urgencyLower = urgencyLabel.toLowerCase();
 
-    // Mark as accepted in the preconsult list
+    // Update Firestore
+    try {
+      await updatePreconsultStatus(id, "accepted");
+    } catch (e) {
+      console.error("Error updating status:", e);
+    }
+
+    // Update local state
     setPreconsults((prev) =>
       prev.map((p) =>
         p.id === id ? { ...p, status: "accepted" } : p
       )
     );
 
-    // ✅ If you *ever* add a true "routine" label and want to skip tasks, you
-    //    can keep this. Right now your mock data uses "not_urgent", so all
-    //    current cases will create tasks.
+    // If you ever add a true "routine" label you want to skip:
     if (urgencyLower.includes("routine")) {
       return;
     }
@@ -138,10 +170,7 @@ export default function ClinicianPage() {
     const nowLabel = new Date(nowMs).toLocaleString();
 
     setScreeningTasks((prev) => {
-      // If we already have a task for this pre-consult, don't add another
-      if (prev.some((t) => t.id === id)) {
-        return prev;
-      }
+      if (prev.some((t) => t.id === id)) return prev;
 
       const next: ScreeningTask[] = [
         ...prev,
@@ -156,25 +185,26 @@ export default function ClinicianPage() {
           urgency: urgencyLabel,
         },
       ];
-
       return next.sort(compareTasks);
     });
   };
 
-
-  const handleDefer = () => {
+  const handleDefer = async () => {
     if (!selected) return;
-
     const id = selected.id;
 
-    // Mark as deferred in the preconsult list
+    try {
+      await updatePreconsultStatus(id, "deferred", selected.deferNote);
+    } catch (e) {
+      console.error("Error updating status:", e);
+    }
+
     setPreconsults((prev) =>
       prev.map((p) =>
         p.id === id ? { ...p, status: "deferred" } : p
       )
     );
 
-    // Remove any existing screening task for this pre-consult
     setScreeningTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
@@ -189,7 +219,7 @@ export default function ClinicianPage() {
     );
   };
 
-  if (auth.isLoading) {
+  if (auth.isLoading || loadingPreconsults) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fdf8f6] text-sm text-slate-600">
         Loading your dashboard…
@@ -198,38 +228,37 @@ export default function ClinicianPage() {
   }
 
   return (
-  <div className="min-h-screen bg-gradient-to-b from-[var(--maroon-700)] via-[var(--maroon-500)] to-[var(--maroon-300)]">
+    <div className="min-h-screen bg-gradient-to-b from-[var(--maroon-700)] via-[var(--maroon-500)] to-[var(--maroon-300)]">
       {/* NAVBAR MATCHING LANDING PAGE */}
-<header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--brand-maroon)]/95 backdrop-blur">
-  <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-    {/* Brand */}
-    <div
-      onClick={() => router.push("/")}
-      className="flex items-center gap-2 cursor-pointer"
-    >
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
-        ❤️
-      </span>
-      <span className="text-lg font-semibold text-white">
-        HealthConnect
-      </span>
-    </div>
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--brand-maroon)]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          {/* Brand */}
+          <div
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
+              ❤️
+            </span>
+            <span className="text-lg font-semibold text-white">
+              HealthConnect
+            </span>
+          </div>
 
-    {/* Clinician label + Sign out */}
-    <div className="flex items-center gap-3">
-      <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
-        Clinician view
-      </span>
-      <button
-        onClick={cognitoLogout}
-        className="text-xs font-medium text-white/80 hover:text-white"
-      >
-        Sign out
-      </button>
-    </div>
-  </div>
-</header>
-
+          {/* Clinician label + Sign out */}
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium text-white">
+              Clinician view
+            </span>
+            <button
+              onClick={cognitoLogout}
+              className="text-xs font-medium text-white/80 hover:text-white"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </header>
 
       <main className="mx-auto max-w-6xl px-6 py-10 space-y-8">
         {/* Page header */}
@@ -244,6 +273,9 @@ export default function ClinicianPage() {
             Review incoming AI-generated pre-consults, accept or defer cases,
             and track follow-up screening tasks in one place.
           </p>
+          {loadError && (
+            <p className="text-xs text-red-500">{loadError}</p>
+          )}
         </section>
 
         {/* Main two-column layout */}
@@ -268,7 +300,7 @@ export default function ClinicianPage() {
               {sortedPreconsults.map((p) => {
                 const id = p.id;
                 const name = p.patientName || "Patient";
-                const age = p.age;
+                const age = (p as any).age;
                 const summary = p.summary || "";
                 const submittedAt = p.createdAt
                   ? new Date(p.createdAt).toLocaleString()
@@ -375,14 +407,14 @@ export default function ClinicianPage() {
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
                         {selected.patientName || "Patient"}
-                        {selected.age && (
+                        {(selected as any).age && (
                           <span className="ml-1 text-xs font-normal text-slate-500">
-                            · {selected.age}
+                            · {(selected as any).age}
                           </span>
                         )}
                       </p>
                       <p className="text-[11px] text-slate-500">
-                        {"Pre-consult generated by patient intake form"}
+                        Pre-consult generated by patient intake form
                       </p>
                     </div>
                   </div>
@@ -392,8 +424,7 @@ export default function ClinicianPage() {
                       AI-generated summary
                     </p>
                     <p className="text-xs leading-relaxed text-slate-700">
-                      {selected.summary ||
-                        "No summary text provided."}
+                      {selected.summary || "No summary text provided."}
                     </p>
                   </div>
 
@@ -410,25 +441,27 @@ export default function ClinicianPage() {
 
                   {/* Defer note – only when case is deferred */}
                   {getStatusLabelFromPreconsult(selected) === "deferred" && (
-  <div className="space-y-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3">
-    <p className="text-xs font-semibold text-slate-800">
-      Note to patient (this message is visible in their portal)
-    </p>
-    <p className="text-xs text-slate-700">
-      Use this space to explain why the referral was deferred and what they
-      should do next — for example, visit an urgent care clinic instead of
-      the ER, or book a routine follow-up.
-    </p>
-    <textarea
-      className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
-      rows={3}
-      value={selected.deferNote ?? ""}
-      onChange={(e) => handleDeferNoteChange(e.target.value)}
-      placeholder="e.g., Based on your symptoms, we recommend visiting an urgent care clinic within the next 24–48 hours instead of the emergency department."
-    />
-  </div>
-)}
-
+                    <div className="space-y-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-semibold text-slate-800">
+                        Note to patient (this message is visible in their portal)
+                      </p>
+                      <p className="text-xs text-slate-700">
+                        Use this space to explain why the referral was deferred
+                        and what they should do next — for example, visit an
+                        urgent care clinic instead of the ER, or book a routine
+                        follow-up.
+                      </p>
+                      <textarea
+                        className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                        rows={3}
+                        value={selected.deferNote ?? ""}
+                        onChange={(e) =>
+                          handleDeferNoteChange(e.target.value)
+                        }
+                        placeholder="e.g., Based on your symptoms, we recommend visiting an urgent care clinic within the next 24–48 hours instead of the emergency department."
+                      />
+                    </div>
+                  )}
 
                   <div className="flex flex-wrap items-center gap-3 pt-1">
                     <button

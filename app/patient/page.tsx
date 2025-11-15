@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "react-oidc-context";
+import Link from "next/link";
+
 import PatientSymptomForm from "@/components/PatientSymptomForm";
 import TriageResultCard from "@/components/TriageResultCard";
 import LocationSection from "@/components/LocationSection";
 import ChatWidget from "@/components/ChatWidget";
-import { SymptomInput, TriageResult } from "@/lib/types";
-//import { getTriageResult } from "@/lib/triage"; // not needed if using /api/triage
-import { cognitoLogout } from "@/app/utils/logout";
-import Link from "next/link";
-//import { saveConsultation } from "@/lib/db"; // optional if you want logging later
 import MapSection from "@/components/MapSection";
+
+import { SymptomInput, TriageResult } from "@/lib/types";
+// we call /api/triage instead of getTriageResult
+import { cognitoLogout } from "@/app/utils/logout";
+import { savePreconsult } from "@/lib/db";
 
 type LatLng = { lat: number; lng: number };
 
@@ -99,29 +101,46 @@ export default function PatientPage() {
     }
   };
 
+  // 🔧 IMPORTANT: now automatically attaches the patient's name
   const handleSubmit = async (input: SymptomInput) => {
     setLoading(true);
     setError(null);
     setTriageResult(null);
 
+    // derive a name from Cognito profile / email
+    const fromProfileName =
+      (auth.user?.profile?.name as string | undefined) || "";
+    const fromEmailPrefix =
+      ((auth.user?.profile?.email as string | undefined) || "")
+        .split("@")[0]
+        .trim();
+
+    const derivedName =
+      fromProfileName.trim() ||
+      fromEmailPrefix ||
+      "Patient";
+
+    const payload = {
+      ...input,
+      patientName: derivedName,
+    };
+
     try {
       const res = await fetch("/api/triage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...input,
-          // later you can also send chat history here
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data: TriageResult = await res.json();
 
       if (!res.ok) {
         setError("There was a problem analyzing your symptoms.");
       } else {
         setTriageResult(data);
-        // Optional: log to Firestore
-        // void saveConsultation(input, data);
+
+        // Save into Firestore so the clinician can see it
+        await savePreconsult(payload as any, data);
       }
     } catch (e) {
       console.error(e);
@@ -239,7 +258,7 @@ export default function PatientPage() {
                   </button>
                   <button
                     onClick={cognitoLogout}
-                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg:white/5"
+                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
                   >
                     Sign out
                   </button>
@@ -278,7 +297,8 @@ export default function PatientPage() {
                     Fill in the details below. This helps CareQuest AI and your
                     clinician understand what you&apos;re experiencing.
                   </p>
-                  <div className="rounded-xl border border-slate-800 bg:black/30 p-4">
+
+                  <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
                     <PatientSymptomForm onSubmit={handleSubmit} />
                   </div>
 
@@ -371,7 +391,7 @@ export default function PatientPage() {
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <textarea
-                className="h-full min-h-[260px] w-full resize-none rounded-xl border border-[var(--lavender-200)] bg:white px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)] focus:border-[var(--lavender-400)] focus:outline-none focus:ring-2 focus:ring-[var(--lavender-400)]/60"
+                className="h-full min-h-[260px] w-full resize-none rounded-xl border border-[var(--lavender-200)] bg-white px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)] focus:border-[var(--lavender-400)] focus:outline-none focus:ring-2 focus:ring-[var(--lavender-400)]/60"
                 placeholder="Example: Type 2 diabetes, on metformin; asthma since childhood; previous knee surgery in 2020..."
                 value={medicalHistory}
                 onChange={(e) => handleHistoryChange(e.target.value)}
@@ -381,7 +401,7 @@ export default function PatientPage() {
             <div className="border-t border-[var(--lavender-200)] px-4 py-3 text-right">
               <button
                 onClick={() => setShowHistory(false)}
-                className="inline-flex items-center justify-center rounded-full border border-[var(--maroon-500)] bg-[var(--maroon-500)] px-4 py-1.5 text-xs font-medium text:white hover:bg-[var(--maroon-700)]"
+                className="inline-flex items-center justify-center rounded-full border border-[var(--maroon-500)] bg-[var(--maroon-500)] px-4 py-1.5 text-xs font-medium text-white hover:bg-[var(--maroon-700)]"
               >
                 Done
               </button>
