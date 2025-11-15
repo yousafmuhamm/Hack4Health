@@ -5,27 +5,43 @@ export default function LocationSection({
 }: {
   recommendedCare: "ER" | "Walk-in clinic" | "Family doctor" | "Virtual care";
 }) {
-  // Demo content – plug in real data/provider APIs later
   const items =
     recommendedCare === "ER"
       ? [
-          { name: "Foothills Medical Centre – Emergency", distance: "3.1 km" },
-          { name: "Peter Lougheed Centre – Emergency", distance: "6.4 km" },
+          {
+            name: "Alberta Children's Hospital – Emergency",
+            distance: "0.9 km",
+          },
+          {
+            name: "Foothills Medical Centre – Emergency",
+            distance: "1.4 km",
+          },
+          {
+            name: "Rockyview General Hospital – Emergency",
+            distance: "10.0 km",
+          },
         ]
       : recommendedCare === "Walk-in clinic"
       ? [
-          { name: "Downtown Walk-in Clinic", distance: "1.2 km" },
-          { name: "Community Care Clinic", distance: "2.7 km" },
+          { name: "Brentwood Medical Clinic", distance: "1.2 km" },
+          { name: "University City Clinic", distance: "1.8 km" },
         ]
       : recommendedCare === "Family doctor"
       ? [
-          { name: "Your family clinic", distance: "-" },
-          { name: "Find a family doctor (CPSA)", distance: "-" },
+          { name: "UCalgary Student Wellness Clinic", distance: "0.5 km" },
+          { name: "Care Medical Clinics NW", distance: "3.2 km" },
         ]
       : [
-          { name: "VirtualCare AB (telehealth)", distance: "online" },
-          { name: "Pharmacy minor ailments", distance: "online / nearby" },
+          { name: "VirtualCare AB", distance: "online" },
+          { name: "Pharmacy Minor Ailments", distance: "nearby" },
         ];
+
+  const openInMaps = (name: string) => {
+    const url =
+      "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(name);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
@@ -34,12 +50,15 @@ export default function LocationSection({
       </h2>
       <ul className="space-y-2 text-sm text-slate-300">
         {items.map((it, idx) => (
-          <li
-            key={idx}
-            className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/30 p-3"
-          >
-            <span>{it.name}</span>
-            <span className="text-slate-400">{it.distance}</span>
+          <li key={idx}>
+            <button
+              type="button"
+              onClick={() => openInMaps(it.name)}
+              className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-950/30 p-3 text-left hover:bg-slate-900/70 hover:underline"
+            >
+              <span>{it.name}</span>
+              <span className="text-slate-400">{it.distance}</span>
+            </button>
           </li>
         ))}
       </ul>
