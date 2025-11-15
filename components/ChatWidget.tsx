@@ -169,13 +169,30 @@ export default function ChatWidget({
       >
         <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3 text-xs">
           {messages.length === 0 && !loading && (
-            <p className="text-[11px] text-slate-300">
-              Start by describing what you&apos;re feeling and how long it&apos;s
-              been going on. When you&apos;re done, you can ask CareQuest AI to
-              summarize the conversation and suggest what level of care might be
-              appropriate. Your saved medical history can be included in that
-              summary.
-            </p>
+            <div className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
+              <p className="font-semibold text-[var(--lavender-200)]">
+                Before you start, please include:
+              </p>
+              <ul className="ml-4 list-disc space-y-1">
+                <li>
+                  Your <strong>first &amp; last name</strong>
+                </li>
+                <li>
+                  Your <strong>age</strong>
+                </li>
+                <li>
+                  A simple <strong>reason</strong> for your visit (e.g., “fever”,
+                  “ankle pain”, “cough”)
+                </li>
+              </ul>
+              <p>
+                Start by describing what you&apos;re feeling and how long
+                it&apos;s been going on. When you&apos;re done, you can ask
+                CareQuest AI to summarize the conversation and suggest what level
+                of care might be appropriate. Your saved medical history can be
+                included in that summary.
+              </p>
+            </div>
           )}
 
           {messages.map((m, idx) => (

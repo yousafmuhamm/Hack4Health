@@ -180,7 +180,6 @@ export default function PatientPage() {
                   >
                     Sign out
                   </button>
-                   
                 </div>
               )}
             </div>
@@ -194,8 +193,16 @@ export default function PatientPage() {
 
             <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
               {/* LEFT: CareQuest AI hero (inline chat) */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <ChatWidget medicalHistory={medicalHistory} />
+
+                {/* HIPAA badge under chatbot */}
+                <div className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-black/20 px-2 py-0.5 text-[10px] font-medium text-[var(--lavender-100)]">
+                  <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/30 text-[8px]">
+                    🔒
+                  </span>
+                  <span>HIPAA · Private</span>
+                </div>
               </div>
 
               {/* RIGHT: Symptom form + results */}
@@ -209,15 +216,20 @@ export default function PatientPage() {
                     clinician understand what you&apos;re experiencing.
                   </p>
                   <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
-                    <PatientSymptomForm
-                      onSubmit={handleSubmit}
-                      
-                    />
+                    <PatientSymptomForm onSubmit={handleSubmit} />
                   </div>
 
                   {error && (
                     <p className="mt-2 text-xs text-red-200">{error}</p>
                   )}
+                </div>
+
+                {/* HIPAA badge under symptom form */}
+                <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-white/20 bg-black/20 px-2 py-0.5 text-[10px] font-medium text-[var(--lavender-100)]">
+                  <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/30 text-[8px]">
+                    🔒
+                  </span>
+                  <span>HIPAA · Private</span>
                 </div>
 
                 {triageResult && (
@@ -243,7 +255,6 @@ export default function PatientPage() {
         </div>
       </div>
 
-      {/* Medical history sidebar */}
       {/* Medical history sidebar */}
       {showHistory && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm">
