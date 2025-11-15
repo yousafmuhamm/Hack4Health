@@ -10,7 +10,7 @@ import ChatWidget from "@/components/ChatWidget";
 import { SymptomInput, TriageResult } from "@/lib/types";
 import { getTriageResult } from "@/lib/triage";
 import { cognitoLogout } from "@/app/utils/logout";
-
+import { saveConsultation } from "@/lib/db";
 
 // Shared AWS login helper (kept for future use if needed)
 function buildLoginUrl(role: "patient" | "clinician") {
@@ -65,6 +65,7 @@ export default function PatientPage() {
     const result = getTriageResult(input);
     setTriageResult(result);
     setHasShared(false);
+    void saveConsultation(input, result);
   }
 
   return (
