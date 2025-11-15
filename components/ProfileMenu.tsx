@@ -12,12 +12,12 @@ function cognitoLogout() {
     localStorage.removeItem("role");
   } catch {}
 
-  const domain = "https://us-west-2frgg6bipo.auth.us-west-2.amazoncognito.com";
+  const domain = "https://healthconnect.auth.us-west-2.amazoncognito.com";
   const clientId = "4s6jh35ds200g1abjd19pqd9gv";
 
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000/"
+      ? "http://localhost:3000"
       : "https://example.com/"; // replace when deployed
 
   const logoutUrl =

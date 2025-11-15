@@ -1,26 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import ProfileMenu from "@/components/ProfileMenu";
 import ChatWidget from "@/components/ChatWidget";
 
 // Shared AWS login helper
 function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000/"
-      : "https://example.com/"; 
+      ? "http://localhost:3000"
+      : "https://example.com/";
 
   const state = JSON.stringify({ role });
 
   return (
-    `https://us-west-2frgg6bipo.auth.us-west-2.amazoncognito.com/login?` +
-    `client_id=4s6jh35ds200g1abjd19pqd9gv` +
-    `&response_type=code&scope=email+openid+profile` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&state=${encodeURIComponent(state)}`
+    `https://healthconnect.auth.us-west-2.amazoncognito.com/login?client_id=4s6jh35ds200g1abjd19pqd9gv&response_type=code&scope=email+openid+profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`
   );
 }
+
 
 export default function GuestPage() {
   const [showSignInModal, setShowSignInModal] = useState(false);

@@ -13,19 +13,14 @@ function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000/"
-      : "https://example.com/"; 
+      : "https://example.com/";
 
   const state = JSON.stringify({ role });
 
   return (
-    `https://us-west-2frgg6bipo.auth.us-west-2.amazoncognito.com/login?` +
-    `client_id=4s6jh35ds200g1abjd19pqd9gv` +
-    `&response_type=code&scope=email+openid+profile` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&state=${encodeURIComponent(state)}`
+    `https://healthconnect.auth.us-west-2.amazoncognito.com/login?client_id=4s6jh35ds200g1abjd19pqd9gv&response_type=code&scope=email+openid+profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}`
   );
 }
-
 export default function ClinicianPage() {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(
