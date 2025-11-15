@@ -1,30 +1,24 @@
+// app/utils/logout.ts
+
 export function cognitoLogout() {
   try {
     localStorage.removeItem("role");
-  } catch {}
+    sessionStorage.removeItem("loginRole");
+  } catch {
+    // ignore storage errors
+  }
 
   const domain = "https://healthconnect.auth.us-west-2.amazoncognito.com";
   const clientId = "4s6jh35ds200g1abjd19pqd9gv";
 
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000/"
-      : "https://example.com/";
+      ? "http://localhost:3000" // landing page in dev
+      : "https://example.com/"; // TODO: your real prod landing URL
 
-  const logoutUrl =
-    `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
-      redirectUri
-    )}`;
+  const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
+    redirectUri
+  )}`;
 
   window.location.href = logoutUrl;
-  
-  const handleSignOut = () => {
-    const clientId = "4s6jh35ds200g1abjd19pqd9gv";
-    const logoutUri = "http://localhost:3000"; // <-- This is your landing page
-    const cognitoDomain = "https://healthconnect.auth.us-west-2.amazoncognito.com";
-  
-    window.location.href =
-      `${cognitoDomain}/logout?client_id=${clientId}` +
-      `&logout_uri=${encodeURIComponent(logoutUri)}`;
-  };
 }

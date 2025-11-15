@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import { useRouter } from "next/navigation";
 import { mockPreconsults } from "@/lib/mockData";
+import { cognitoLogout } from "@/app/utils/logout";
 
 type Preconsult = any;
 
@@ -61,16 +62,6 @@ const compareTasks = (a: ScreeningTask, b: ScreeningTask) => {
 export default function ClinicianPage() {
   const auth = useAuth();
   const router = useRouter();
-
-  const handleSignOut = () => {
-    const clientId = "4s6jh35ds200g1abjd19pqd9gv";
-    const logoutUri = "http://localhost:3000"; // home/landing
-    const cognitoDomain = "https://healthconnect.auth.us-west-2.amazoncognito.com";
-
-    window.location.href =
-      `${cognitoDomain}/logout?client_id=${clientId}` +
-      `&logout_uri=${encodeURIComponent(logoutUri)}`;
-  };
 
   const [preconsults, setPreconsults] = useState<Preconsult[]>(
     () => (mockPreconsults as Preconsult[]) ?? []
@@ -140,7 +131,7 @@ export default function ClinicianPage() {
       )
     );
 
-    // Example rule: only create a screening task if the case is NOT routine
+    // Only create a screening task if the case is NOT routine
     if (urgencyLower.includes("routine")) {
       return;
     }
@@ -216,11 +207,11 @@ export default function ClinicianPage() {
               Clinician view
             </span>
             <button
-            onClick={handleSignOut}
-            className="text-xs font-medium text-slate-700 hover:text-rose-700"
-          >
-            Sign out
-          </button>
+              onClick={cognitoLogout}
+              className="text-xs font-medium text-slate-700 hover:text-rose-700"
+            >
+              Sign out
+            </button>
           </div>
         </div>
       </header>
