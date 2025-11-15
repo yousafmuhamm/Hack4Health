@@ -61,7 +61,7 @@ Return **ONLY** valid JSON in this exact TypeScript-like shape:
     ];
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.1-mini",
+      model: "gpt-4o-mini",
       temperature: 0,
       messages: chatMessages,
     });

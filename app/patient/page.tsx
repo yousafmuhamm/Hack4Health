@@ -8,11 +8,11 @@ import TriageResultCard from "@/components/TriageResultCard";
 import LocationSection from "@/components/LocationSection";
 import ChatWidget from "@/components/ChatWidget";
 import { SymptomInput, TriageResult } from "@/lib/types";
-import { getTriageResult } from "@/lib/triage";
+// import { getTriageResult } from "@/lib/triage"; // not needed if using /api/triage
 import { cognitoLogout } from "@/app/utils/logout";
-import { saveConsultation } from "@/lib/db";
+// import { saveConsultation } from "@/lib/db"; // optional if you want logging later
 
-// Shared AWS login helper (kept for future use if needed)
+// (Optional) kept in case you reuse it later
 function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
@@ -31,15 +31,16 @@ export default function PatientPage() {
   const auth = useAuth();
 
   const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
-  const [hasShared, setHasShared] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  const [hasShared, setHasShared] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [medicalHistory, setMedicalHistory] = useState("");
 
   const email =
     (auth.user?.profile?.email as string | undefined) ?? "patient@example.com";
-
 
   // Load saved medical history from localStorage
   useEffect(() => {
@@ -61,12 +62,37 @@ export default function PatientPage() {
     }
   };
 
-  function handleSubmit(input: SymptomInput) {
-    const result = getTriageResult(input);
-    setTriageResult(result);
-    setHasShared(false);
-    void saveConsultation(input, result);
-  }
+  const handleSubmit = async (input: SymptomInput) => {
+    setLoading(true);
+    setError(null);
+    setTriageResult(null);
+
+    try {
+      const res = await fetch("/api/triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...input,
+          // later you can also send chat history here
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError("There was a problem analyzing your symptoms.");
+      } else {
+        setTriageResult(data);
+        // Optional: log to Firestore
+        // void saveConsultation(input, data);
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -91,8 +117,10 @@ export default function PatientPage() {
               </p>
 
               <div className="mt-4 flex flex-wrap gap-3">
-                {/* Only Health education button */}
-                <a href="/education" className="btn btn-outline-lavender text-sm">
+                <a
+                  href="/education"
+                  className="btn btn-outline-lavender text-sm"
+                >
                   Health education
                 </a>
               </div>
@@ -107,7 +135,6 @@ export default function PatientPage() {
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lavender-400)] text-[var(--maroon-700)] text-xs font-semibold">
                   {email?.[0]?.toUpperCase() ?? "P"}
                 </span>
-                {/* Label clearly says Profile */}
                 <span className="hidden md:block text-xs font-medium">
                   Profile
                 </span>
@@ -132,14 +159,12 @@ export default function PatientPage() {
                   >
                     Medical history
                   </button>
-                  {/* New: Sign out button in dropdown */}
                   <button
-  onClick={cognitoLogout}
-  className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
->
-  Sign out
-</button>
-
+                    onClick={cognitoLogout}
+                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
@@ -159,7 +184,6 @@ export default function PatientPage() {
 
               {/* RIGHT: Symptom form + results */}
               <div className="space-y-4">
-                {/* 🔧 UPDATED: background matches CareQuest AI box */}
                 <div className="rounded-3xl border border-[var(--lavender-400)] bg-[var(--popup-bg)]/95 p-5 shadow-2xl shadow-black/40 text-slate-50">
                   <h3 className="mb-2 text-base font-semibold">
                     Describe your symptoms
@@ -169,26 +193,33 @@ export default function PatientPage() {
                     clinician understand what you&apos;re experiencing.
                   </p>
                   <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
-                    <PatientSymptomForm onSubmit={handleSubmit} />
+                    <PatientSymptomForm
+                      onSubmit={handleSubmit}
+                      
+                    />
                   </div>
+
+                  {error && (
+                    <p className="mt-2 text-xs text-red-200">{error}</p>
+                  )}
                 </div>
 
                 {triageResult && (
-                  <TriageResultCard
-                    result={triageResult}
-                    hasShared={hasShared}
-                    onShare={() => setHasShared(true)}
-                    onDelete={() => {
-                      setTriageResult(null);
-                      setHasShared(false);
-                    }}
-                  />
-                )}
+                  <>
+                    <TriageResultCard
+                      result={triageResult}
+                      hasShared={hasShared}
+                      onShare={() => setHasShared(true)}
+                      onDelete={() => {
+                        setTriageResult(null);
+                        setHasShared(false);
+                      }}
+                    />
 
-                {triageResult && (
-                  <LocationSection
-                    recommendedCare={triageResult.recommendedCare}
-                  />
+                    <LocationSection
+                      recommendedCare={triageResult.recommendedCare}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -196,7 +227,7 @@ export default function PatientPage() {
         </div>
       </div>
 
-      {/* Medical history sidebar (unchanged behavior, just still here) */}
+      {/* Medical history sidebar */}
       {showHistory && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm">
           <div className="flex h-full w-full max-w-md flex-col bg-[var(--lavender-50)] shadow-2xl">
