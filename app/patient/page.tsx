@@ -8,12 +8,12 @@ import TriageResultCard from "@/components/TriageResultCard";
 import LocationSection from "@/components/LocationSection";
 import ChatWidget from "@/components/ChatWidget";
 import { SymptomInput, TriageResult } from "@/lib/types";
-import { getTriageResult } from "@/lib/triage";
+import { getTriageResult } from "@/lib/triage"; // not needed if using /api/triage
 import { cognitoLogout } from "@/app/utils/logout";
 import Link from "next/link";
-import { saveConsultation } from "@/lib/db";
+import { saveConsultation } from "@/lib/db"; // optional if you want logging later
 
-// Shared AWS login helper (kept for future use if needed)
+// (Optional) kept in case you reuse it later
 function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
@@ -32,8 +32,10 @@ export default function PatientPage() {
   const auth = useAuth();
 
   const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
-  const [hasShared, setHasShared] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  const [hasShared, setHasShared] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [medicalHistory, setMedicalHistory] = useState("");
@@ -61,12 +63,37 @@ export default function PatientPage() {
     }
   };
 
-  function handleSubmit(input: SymptomInput) {
-    const result = getTriageResult(input);
-    setTriageResult(result);
-    setHasShared(false);
-    void saveConsultation(input, result);
-  }
+  const handleSubmit = async (input: SymptomInput) => {
+    setLoading(true);
+    setError(null);
+    setTriageResult(null);
+
+    try {
+      const res = await fetch("/api/triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...input,
+          // later you can also send chat history here
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError("There was a problem analyzing your symptoms.");
+      } else {
+        setTriageResult(data);
+        // Optional: log to Firestore
+        // void saveConsultation(input, data);
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -105,8 +132,10 @@ export default function PatientPage() {
               </p>
 
               <div className="mt-4 flex flex-wrap gap-3">
-                {/* Only Health education button */}
-                <a href="/education" className="btn btn-outline-lavender text-sm">
+                <a
+                  href="/education"
+                  className="btn btn-outline-lavender text-sm"
+                >
                   Health education
                 </a>
               </div>
@@ -151,6 +180,11 @@ export default function PatientPage() {
                   >
                     Sign out
                   </button>
+                    onClick={cognitoLogout}
+                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
+                  >
+                    Sign out
+                  </button>
                 </div>
               )}
             </div>
@@ -179,26 +213,33 @@ export default function PatientPage() {
                     clinician understand what you&apos;re experiencing.
                   </p>
                   <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
-                    <PatientSymptomForm onSubmit={handleSubmit} />
+                    <PatientSymptomForm
+                      onSubmit={handleSubmit}
+                      
+                    />
                   </div>
+
+                  {error && (
+                    <p className="mt-2 text-xs text-red-200">{error}</p>
+                  )}
                 </div>
 
                 {triageResult && (
-                  <TriageResultCard
-                    result={triageResult}
-                    hasShared={hasShared}
-                    onShare={() => setHasShared(true)}
-                    onDelete={() => {
-                      setTriageResult(null);
-                      setHasShared(false);
-                    }}
-                  />
-                )}
+                  <>
+                    <TriageResultCard
+                      result={triageResult}
+                      hasShared={hasShared}
+                      onShare={() => setHasShared(true)}
+                      onDelete={() => {
+                        setTriageResult(null);
+                        setHasShared(false);
+                      }}
+                    />
 
-                {triageResult && (
-                  <LocationSection
-                    recommendedCare={triageResult.recommendedCare}
-                  />
+                    <LocationSection
+                      recommendedCare={triageResult.recommendedCare}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -206,6 +247,7 @@ export default function PatientPage() {
         </div>
       </div>
 
+      {/* Medical history sidebar */}
       {/* Medical history sidebar */}
       {showHistory && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm">
