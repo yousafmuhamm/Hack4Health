@@ -17,4 +17,14 @@ export function cognitoLogout() {
     )}`;
 
   window.location.href = logoutUrl;
+  
+  const handleSignOut = () => {
+    const clientId = "4s6jh35ds200g1abjd19pqd9gv";
+    const logoutUri = "http://localhost:3000"; // <-- This is your landing page
+    const cognitoDomain = "https://healthconnect.auth.us-west-2.amazoncognito.com";
+  
+    window.location.href =
+      `${cognitoDomain}/logout?client_id=${clientId}` +
+      `&logout_uri=${encodeURIComponent(logoutUri)}`;
+  };
 }

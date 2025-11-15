@@ -18,16 +18,31 @@ export default function HealthConnectLanding() {
 
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "http://localhost:3000" 
+      ? "http://localhost:3000"
       : "https://your-production-url.com/"; // change this later
 
+  // Build Cognito login URL, embedding role + returnPath into `state`
   const buildLoginUrl = (role: Role) => {
-    // Add role to state by putting it in “state” param
-    const stateObj = JSON.stringify({ role });
+    const returnPath =
+      role === "clinician"
+        ? "/clinician"
+        : role === "patient"
+        ? "/patient"
+        : "/";
 
-    return (`https://healthconnect.auth.us-west-2.amazoncognito.com/login?client_id=4s6jh35ds200g1abjd19pqd9gv&response_type=code&scope=email+openid+profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(stateObj)}`
-);
+    const stateObj = JSON.stringify({
+      role,
+      returnPath,
+    });
 
+    return (
+      `https://healthconnect.auth.us-west-2.amazoncognito.com/login` +
+      `?client_id=4s6jh35ds200g1abjd19pqd9gv` +
+      `&response_type=code` +
+      `&scope=email+openid+profile` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${encodeURIComponent(stateObj)}`
+    );
   };
 
   const handleRoleLogin = (role: Role) => {
@@ -37,6 +52,8 @@ export default function HealthConnectLanding() {
       return;
     }
 
+    setShowRoleModal(false);
+
     const url = buildLoginUrl(role);
     window.location.href = url;
   };
@@ -45,22 +62,35 @@ export default function HealthConnectLanding() {
      Detect Cognito redirect
   --------------------------- */
   useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-  const stateRaw = params.get("state");
+    // Only run in browser
+    if (typeof window === "undefined") return;
 
-  if (code && stateRaw) {
-    try {
-      const state = JSON.parse(stateRaw);
-      if (state.role) {
-        localStorage.setItem("role", state.role);
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const stateRaw = params.get("state");
+
+    if (code && stateRaw) {
+      try {
+        // stateRaw was URL-encoded JSON, URLSearchParams already decoded it
+        const state = JSON.parse(stateRaw) as {
+          role?: string;
+          returnPath?: string;
+        };
+
+        if (state.role) {
+          localStorage.setItem("role", state.role);
+        }
+
+        if (state.returnPath) {
+          // Redirect to clinician/patient dashboard after successful login
+          router.replace(state.returnPath);
+          return;
+        }
+      } catch (e) {
+        console.error("Invalid state JSON from Cognito redirect:", e);
       }
-    } catch (e) {
-      console.error("Invalid state JSON");
     }
-  }
-}, []);
-
+  }, [router]);
 
   /* --------------------------
      UI START
@@ -72,7 +102,6 @@ export default function HealthConnectLanding() {
       {/* NAVBAR */}
       <header className="sticky top-0 z-40 bg-[var(--brand-maroon)] text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-
           {/* Brand */}
           <div className="flex items-center gap-2">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white text-[var(--brand-maroon)] font-bold">
@@ -107,7 +136,6 @@ export default function HealthConnectLanding() {
       {/* HERO SECTION */}
       <section className="bg-white">
         <div className="max-w-6xl mx-auto px-4 pt-14 pb-20 grid md:grid-cols-2 gap-10">
-
           {/* LEFT */}
           <div className="max-w-[540px]">
             <span className="inline-flex items-center gap-2 rounded-full bg-[var(--lavender-light)] text-[var(--brand-maroon)] px-3 py-1 text-xs font-semibold">
