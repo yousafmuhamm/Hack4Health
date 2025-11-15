@@ -50,14 +50,22 @@ export default function HealthConnectLanding() {
      Detect Cognito redirect
   --------------------------- */
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const stateRaw = params.get("state");
 
-    if (code) {
-      console.log("✅ Cognito Auth Code detected:", code);
-      window.history.replaceState({}, document.title, "/");
+  if (code && stateRaw) {
+    try {
+      const state = JSON.parse(stateRaw);
+      if (state.role) {
+        localStorage.setItem("role", state.role);
+      }
+    } catch (e) {
+      console.error("Invalid state JSON");
     }
-  }, []);
+  }
+}, []);
+
 
   /* --------------------------
      UI START
