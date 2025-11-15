@@ -29,25 +29,35 @@ function buildLoginUrl(role: "patient" | "clinician") {
     redirectUri
   )}&state=${encodeURIComponent(state)}`;
 }
+
+// Decide ER vs WALK_IN vs GENERAL based on recommendedCare text
 function inferCareType(result: TriageResult): "ER" | "WALK_IN" | "GENERAL" {
   const text = (result.recommendedCare || "").toLowerCase();
 
-  if (text.includes("emergency") || text.includes("er")) {
+  // ER-type wording
+  if (
+    text.includes("emergency") ||
+    text.includes("er") ||
+    text.includes("go to the nearest emergency") ||
+    text.includes("call 911")
+  ) {
     return "ER";
   }
 
+  // Family / walk-in clinic wording
   if (
+    text.includes("family doctor") ||
+    text.includes("family clinic") ||
     text.includes("walk-in") ||
     text.includes("walk in") ||
-    text.includes("clinic") ||
-    text.includes("family doctor")
+    text.includes("urgent care") ||
+    text.includes("clinic")
   ) {
     return "WALK_IN";
   }
 
   return "GENERAL";
 }
-
 
 export default function PatientPage() {
   const router = useRouter();
@@ -57,7 +67,7 @@ export default function PatientPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔹 NEW: state for Google Maps
+  // For Google Maps
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
@@ -121,7 +131,7 @@ export default function PatientPage() {
     }
   };
 
-  // 🔹 NEW: request user’s current location (called after triage)
+  // Ask for exact user location
   const requestLocation = () => {
     if (!navigator.geolocation) {
       alert("Location is not supported by your browser.");
@@ -229,7 +239,7 @@ export default function PatientPage() {
                   </button>
                   <button
                     onClick={cognitoLogout}
-                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg-white/5"
+                    className="w-full px-3 py-2 text-left text-[11px] text-red-200 hover:bg:white/5"
                   >
                     Sign out
                   </button>
@@ -260,7 +270,7 @@ export default function PatientPage() {
                     Fill in the details below. This helps CareQuest AI and your
                     clinician understand what you&apos;re experiencing.
                   </p>
-                  <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
+                  <div className="rounded-xl border border-slate-800 bg:black/30 p-4">
                     <PatientSymptomForm onSubmit={handleSubmit} />
                   </div>
 
@@ -285,7 +295,7 @@ export default function PatientPage() {
                       recommendedCare={triageResult.recommendedCare}
                     />
 
-                    {/* 🔹 NEW: ask for exact location + show Google Map */}
+                    {/* Ask for exact location + show Google Map */}
                     <div className="mt-4 space-y-2">
                       {!userLocation && (
                         <button
@@ -303,16 +313,16 @@ export default function PatientPage() {
                         </p>
                       )}
 
-                        {userLocation && triageResult && (
-                          <div className="mt-2">
-                            <MapSection
-                              userLocation={userLocation}
-                              careType={inferCareType(triageResult)}
-                            />
-                          </div>
-                        )
-                      }</div>
-                      </>
+                      {userLocation && triageResult && (
+                        <div className="mt-2">
+                          <MapSection
+                            userLocation={userLocation}
+                            careType={inferCareType(triageResult)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -345,7 +355,7 @@ export default function PatientPage() {
 
             <div className="flex-1 overflow-y-auto px-4 py-3">
               <textarea
-                className="h-full min-h-[260px] w-full resize-none rounded-xl border border-[var(--lavender-200)] bg-white px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)] focus:border-[var(--lavender-400)] focus:outline-none focus:ring-2 focus:ring-[var(--lavender-400)]/60"
+                className="h-full min-h-[260px] w-full resize-none rounded-xl border border-[var(--lavender-200)] bg:white px-3 py-2 text-sm text-[var(--fg)] placeholder:text-[var(--fg-muted)] focus:border-[var(--lavender-400)] focus:outline-none focus:ring-2 focus:ring-[var(--lavender-400)]/60"
                 placeholder="Example: Type 2 diabetes, on metformin; asthma since childhood; previous knee surgery in 2020..."
                 value={medicalHistory}
                 onChange={(e) => handleHistoryChange(e.target.value)}
@@ -355,7 +365,7 @@ export default function PatientPage() {
             <div className="border-t border-[var(--lavender-200)] px-4 py-3 text-right">
               <button
                 onClick={() => setShowHistory(false)}
-                className="inline-flex items-center justify-center rounded-full border border-[var(--maroon-500)] bg-[var(--maroon-500)] px-4 py-1.5 text-xs font-medium text-white hover:bg-[var(--maroon-700)]"
+                className="inline-flex items-center justify-center rounded-full border border-[var(--maroon-500)] bg-[var(--maroon-500)] px-4 py-1.5 text-xs font-medium text:white hover:bg-[var(--maroon-700)]"
               >
                 Done
               </button>

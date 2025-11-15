@@ -1,16 +1,35 @@
 "use client";
 
+type RecommendedCare =
+  | "ER"
+  | "Walk-in clinic"
+  | "Family doctor"
+  | "Virtual care";
+
+type Item = {
+  name: string;
+  distance: string;
+  // optional override for the query we send to Google Maps
+  mapsQuery?: string;
+};
+
 export default function LocationSection({
   recommendedCare,
 }: {
-  recommendedCare: "ER" | "Walk-in clinic" | "Family doctor" | "Virtual care";
+  recommendedCare: RecommendedCare;
 }) {
   // Demo content – plug in real data/provider APIs later
-  const items =
+  const items: Item[] =
     recommendedCare === "ER"
       ? [
-          { name: "Foothills Medical Centre – Emergency", distance: "3.1 km" },
-          { name: "Peter Lougheed Centre – Emergency", distance: "6.4 km" },
+          {
+            name: "Foothills Medical Centre – Emergency",
+            distance: "3.1 km",
+          },
+          {
+            name: "Peter Lougheed Centre – Emergency",
+            distance: "6.4 km",
+          },
         ]
       : recommendedCare === "Walk-in clinic"
       ? [
@@ -27,6 +46,14 @@ export default function LocationSection({
           { name: "Pharmacy minor ailments", distance: "online / nearby" },
         ];
 
+  const openInGoogleMaps = (item: Item) => {
+    const query = item.mapsQuery ?? item.name;
+    const url =
+      "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(query);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-4">
       <h2 className="text-sm font-semibold text-slate-100">
@@ -34,12 +61,15 @@ export default function LocationSection({
       </h2>
       <ul className="space-y-2 text-sm text-slate-300">
         {items.map((it, idx) => (
-          <li
-            key={idx}
-            className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/30 p-3"
-          >
-            <span>{it.name}</span>
-            <span className="text-slate-400">{it.distance}</span>
+          <li key={idx}>
+            <button
+              type="button"
+              onClick={() => openInGoogleMaps(it)}
+              className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-950/30 p-3 text-left hover:bg-slate-900/70 hover:underline"
+            >
+              <span>{it.name}</span>
+              <span className="text-slate-400">{it.distance}</span>
+            </button>
           </li>
         ))}
       </ul>
