@@ -12,6 +12,9 @@ import { SymptomInput, TriageResult } from "@/lib/types";
 import { cognitoLogout } from "@/app/utils/logout";
 import Link from "next/link";
 //import { saveConsultation } from "@/lib/db"; // optional if you want logging later
+import MapSection from "@/components/MapSection";
+
+type LatLng = { lat: number; lng: number };
 
 // (Optional) kept in case you reuse it later
 function buildLoginUrl(role: "patient" | "clinician") {
@@ -26,6 +29,25 @@ function buildLoginUrl(role: "patient" | "clinician") {
     redirectUri
   )}&state=${encodeURIComponent(state)}`;
 }
+function inferCareType(result: TriageResult): "ER" | "WALK_IN" | "GENERAL" {
+  const text = (result.recommendedCare || "").toLowerCase();
+
+  if (text.includes("emergency") || text.includes("er")) {
+    return "ER";
+  }
+
+  if (
+    text.includes("walk-in") ||
+    text.includes("walk in") ||
+    text.includes("clinic") ||
+    text.includes("family doctor")
+  ) {
+    return "WALK_IN";
+  }
+
+  return "GENERAL";
+}
+
 
 export default function PatientPage() {
   const router = useRouter();
@@ -34,6 +56,10 @@ export default function PatientPage() {
   const [triageResult, setTriageResult] = useState<TriageResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 🔹 NEW: state for Google Maps
+  const [userLocation, setUserLocation] = useState<LatLng | null>(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
 
   const [hasShared, setHasShared] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -93,6 +119,33 @@ export default function PatientPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 🔹 NEW: request user’s current location (called after triage)
+  const requestLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Location is not supported by your browser.");
+      return;
+    }
+
+    setLoadingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        setLoadingLocation(false);
+      },
+      (err) => {
+        console.error("Error getting location:", err);
+        setLoadingLocation(false);
+        alert(
+          "We couldn't get your location. Please check location permissions and try again."
+        );
+      }
+    );
   };
 
   return (
@@ -180,7 +233,6 @@ export default function PatientPage() {
                   >
                     Sign out
                   </button>
-                   
                 </div>
               )}
             </div>
@@ -209,10 +261,7 @@ export default function PatientPage() {
                     clinician understand what you&apos;re experiencing.
                   </p>
                   <div className="rounded-xl border border-slate-800 bg-black/30 p-4">
-                    <PatientSymptomForm
-                      onSubmit={handleSubmit}
-                      
-                    />
+                    <PatientSymptomForm onSubmit={handleSubmit} />
                   </div>
 
                   {error && (
@@ -235,7 +284,35 @@ export default function PatientPage() {
                     <LocationSection
                       recommendedCare={triageResult.recommendedCare}
                     />
-                  </>
+
+                    {/* 🔹 NEW: ask for exact location + show Google Map */}
+                    <div className="mt-4 space-y-2">
+                      {!userLocation && (
+                        <button
+                          type="button"
+                          onClick={requestLocation}
+                          className="rounded-full border border-[var(--lavender-400)] bg-black/30 px-4 py-1.5 text-xs font-medium hover:bg-black/50"
+                        >
+                          Share my current location
+                        </button>
+                      )}
+
+                      {loadingLocation && (
+                        <p className="text-xs text-slate-300">
+                          Getting your location…
+                        </p>
+                      )}
+
+                        {userLocation && triageResult && (
+                          <div className="mt-2">
+                            <MapSection
+                              userLocation={userLocation}
+                              careType={inferCareType(triageResult)}
+                            />
+                          </div>
+                        )
+                      }</div>
+                      </>
                 )}
               </div>
             </div>
@@ -243,7 +320,6 @@ export default function PatientPage() {
         </div>
       </div>
 
-      {/* Medical history sidebar */}
       {/* Medical history sidebar */}
       {showHistory && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40 backdrop-blur-sm">
