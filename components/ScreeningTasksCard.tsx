@@ -8,7 +8,7 @@ type ScreeningTask = {
   id: string;
   label: string;
   bucket: TaskBucket;
-  sourcePatient?: string; // optional: whose case triggered it
+  sourcePatient?: string; // which accepted case triggered this
 };
 
 type Props = {
@@ -16,7 +16,6 @@ type Props = {
 };
 
 function generateTasks(acceptedCases: Preconsult[]): ScreeningTask[] {
-  // Simple rule-based demo: in reality this would be smarter.
   const tasks: ScreeningTask[] = [];
 
   for (const pc of acceptedCases) {
@@ -36,7 +35,7 @@ function generateTasks(acceptedCases: Preconsult[]): ScreeningTask[] {
       });
     }
 
-    // Age-based colorectal screening
+    // Age-based colorectal screening (50+)
     if (pc.age >= 50) {
       tasks.push({
         id: `fit-${pc.id}`,
@@ -61,27 +60,6 @@ function generateTasks(acceptedCases: Preconsult[]): ScreeningTask[] {
     }
   }
 
-  // Fallback demo tasks if nothing accepted yet
-  if (tasks.length === 0) {
-    return [
-      {
-        id: "phq2-demo",
-        label: "PHQ-2 depression screen",
-        bucket: "today",
-      },
-      {
-        id: "fit-demo",
-        label: "Colon cancer screen (FIT)",
-        bucket: "this_week",
-      },
-      {
-        id: "a1c-demo",
-        label: "A1C for diabetes risk",
-        bucket: "next_visit",
-      },
-    ];
-  }
-
   return tasks;
 }
 
@@ -93,30 +71,43 @@ export default function ScreeningTasksCard({ acceptedCases }: Props) {
       <header className="border-b border-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
         Screening tasks
       </header>
-      <div className="divide-y divide-slate-800">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className="flex items-center justify-between px-4 py-3 text-sm text-slate-100"
-          >
-            <div>
-              <div>{task.label}</div>
-              {task.sourcePatient && (
-                <div className="text-xs text-slate-400">
-                  Triggered by: {task.sourcePatient}
-                </div>
-              )}
+
+      {tasks.length === 0 ? (
+        // Empty state when no accepted cases have triggered tasks yet
+        <div className="px-4 py-4 text-sm text-slate-300">
+          No screening tasks yet.
+          <span className="block text-xs text-slate-400 mt-1">
+            Tasks appear once you <span className="font-medium">accept</span>{" "}
+            incoming pre-consults that meet screening criteria (e.g., low mood,
+            diabetes risk, age over 50).
+          </span>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-800">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-center justify-between px-4 py-3 text-sm text-slate-100"
+            >
+              <div>
+                <div>{task.label}</div>
+                {task.sourcePatient && (
+                  <div className="text-xs text-slate-400">
+                    Triggered by: {task.sourcePatient}
+                  </div>
+                )}
+              </div>
+              <span className="text-xs text-slate-400">
+                {task.bucket === "today"
+                  ? "today"
+                  : task.bucket === "this_week"
+                  ? "this week"
+                  : "next visit"}
+              </span>
             </div>
-            <span className="text-xs text-slate-400">
-              {task.bucket === "today"
-                ? "today"
-                : task.bucket === "this_week"
-                ? "this week"
-                : "next visit"}
-            </span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

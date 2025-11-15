@@ -53,4 +53,18 @@ export const mockPreconsults: Preconsult[] = [
     createdAt: "2025-11-13T18:20:21Z",
     urgency: "mildly_urgent",
   },
+
+  {
+    id: "6",
+    patientName: "Jacob annoyance",
+    age: 7,
+    summary:
+      "Fall while hiking during late summer, now with wrist pain and swelling suggesting a possible distal radius fracture.",
+    details:
+      "Slipped while hiking and landed on outstretched hand. Immediate wrist pain and swelling, reduced motion. No numbness or open wounds.",
+      createdAt: "2025-11-13T17:10:21Z",
+    urgency: "mildly_urgent",
+  },
+
+
 ];

@@ -7,10 +7,27 @@ import PatientPreconsultList from "@/components/PatientPreconsultList";
 import PatientPreconsultDetail from "@/components/PatientPreconsultDetail";
 import ScreeningTasksCard from "@/components/ScreeningTasksCard";
 
+const urgencyPriority: Record<string, number> = {
+  very_urgent: 1,
+  urgent: 2,
+  mildly_urgent: 3,
+  not_urgent: 4,
+};
+
+
 type DecisionStatus = "accepted" | "deferred";
 
 export default function ClinicianPage() {
-  const [preconsults] = useState<Preconsult[]>(mockPreconsults);
+  const sorted = [...mockPreconsults].sort((a, b) => {
+    const pA = urgencyPriority[a.urgency] ?? 99;
+    const pB = urgencyPriority[b.urgency] ?? 99;
+  
+    if (pA !== pB) return pA - pB;
+  
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  
+  const [preconsults] = useState<Preconsult[]>(sorted);
 
   const [selectedId, setSelectedId] = useState<string | null>(
     preconsults[0]?.id ?? null
