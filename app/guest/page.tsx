@@ -9,7 +9,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000"
-      : "https://example.com/";
+      : "https://main.d2rm24vunvbzge.amplifyapp.com";
 
   // include returnPath in state
   const returnPath = role === "patient" ? "/patient" : "/clinician";
@@ -18,7 +18,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
 
   return (
      `https://us-west-2yshsyjevr.auth.us-west-2.amazoncognito.com/login` +
-    `?client_id=2hac1oa1g8c6hb244a6r7t986ps` +
+    `?client_id=2hac1oa1g8c6hb244a6r7t986p` +
     `&response_type=code` +
     `&scope=email+openid+profile` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
