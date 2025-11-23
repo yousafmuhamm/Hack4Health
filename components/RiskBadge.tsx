@@ -1,25 +1,24 @@
 // components/RiskBadge.tsx
-
-import { UrgencyLevel } from '@/lib/types';
+import { PreconsultUrgency } from "@/lib/types";
 
 interface Props {
-  level: UrgencyLevel;
+  level: PreconsultUrgency;
 }
 
 export function RiskBadge({ level }: Props) {
   const label =
-    level === 'low'
-      ? 'Low'
-      : level === 'moderate'
-      ? 'Moderate'
-      : 'High';
+    level === "not_urgent"
+      ? "Not Urgent"
+      : level === "mildly_urgent"
+      ? "Mildly Urgent"
+      : "Very Urgent";
 
   const colors =
-    level === 'low'
-      ? 'bg-emerald-900/60 text-emerald-200 border-emerald-700'
-      : level === 'moderate'
-      ? 'bg-amber-900/60 text-amber-200 border-amber-700'
-      : 'bg-rose-900/60 text-rose-200 border-rose-700';
+    level === "not_urgent"
+      ? "bg-emerald-900/60 text-emerald-200 border-emerald-700"
+      : level === "mildly_urgent"
+      ? "bg-amber-900/60 text-amber-200 border-amber-700"
+      : "bg-rose-900/60 text-rose-200 border-rose-700";
 
   return (
     <span
