@@ -9,7 +9,7 @@ export function cognitoLogout() {
   }
 
   const domain = "https://us-west-2yshsyjevr.auth.us-west-2.amazoncognito.com";
-  const clientId = "4s6jh35ds200g1abjd19pqd9gv";
+  const clientId = "2hac1oa1g8c6hb244a6r7t986p";
 
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"

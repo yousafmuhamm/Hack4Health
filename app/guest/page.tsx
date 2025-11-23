@@ -18,7 +18,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
 
   return (
      `https://us-west-2yshsyjevr.auth.us-west-2.amazoncognito.com/login` +
-    `?client_id=4s6jh35ds200g1abjd19pqd9gv` +
+    `?client_id=2hac1oa1g8c6hb244a6r7t986ps` +
     `&response_type=code` +
     `&scope=email+openid+profile` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
