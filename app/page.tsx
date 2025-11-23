@@ -19,7 +19,7 @@ export default function HealthConnectLanding() {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000"
-      : "https://your-production-url.com/"; // change this later
+      : "https://main.d2rm24vunvbzge.amplifyapp.com";
 
   // Build Cognito login URL, embedding role + returnPath into `state`
   const buildLoginUrl = (role: Role) => {
