@@ -17,7 +17,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
   const state = JSON.stringify({ role, returnPath });
 
   return (
-    `https://healthconnect.auth.us-west-2.amazoncognito.com/login` +
+     `https://us-west-2yshsyjevr.auth.us-west-2.amazoncognito.com/login` +
     `?client_id=4s6jh35ds200g1abjd19pqd9gv` +
     `&response_type=code` +
     `&scope=email+openid+profile` +

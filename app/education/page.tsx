@@ -85,14 +85,14 @@ function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000"
-      : "https://your-production-url.com/"; // match landing env
+       : "https://main.d2rm24vunvbzge.amplifyapp.com"; // match landing env
 
   const returnPath = role === "patient" ? "/patient" : "/clinician";
 
   const state = JSON.stringify({ role, returnPath });
 
   return (
-    `https://healthconnect.auth.us-west-2.amazoncognito.com/login` +
+     `https://us-west-2yshsyjevr.auth.us-west-2.amazoncognito.com/login` +
     `?client_id=4s6jh35ds200g1abjd19pqd9gv` +
     `&response_type=code` +
     `&scope=email+openid+profile` +

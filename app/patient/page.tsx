@@ -23,7 +23,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000"
-      : "https://example.com/";
+       : "https://main.d2rm24vunvbzge.amplifyapp.com";
 
   const state = JSON.stringify({ role });
 
