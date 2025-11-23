@@ -1,10 +1,18 @@
 // lib/screening.ts
 
-import { ScreeningTask } from './types';
-import { mockScreeningTasks } from './mockData';
+import { ScreeningTask } from "./types";
 
+/**
+ * Placeholder implementation for screening tasks.
+ *
+ * Previously this used mockScreeningTasks from mockData.
+ * Now that you're moving to real data (e.g., Firebase),
+ * this returns an empty list so the app still builds.
+ *
+ * Later you can replace this with a real implementation
+ * that fetches tasks from your backend.
+ */
 export function getDueScreeningTasks(): ScreeningTask[] {
-  // In a real system we would calculate this from lastDone + rules.
-  // For MVP we just return tasks with status 'due'.
-  return mockScreeningTasks.filter((task) => task.status === 'due');
+  // TODO: Replace with real data source (Firebase, API, etc.)
+  return [];
 }

@@ -40,3 +40,13 @@ export type Preconsult = {
   status?: PreconsultStatus; // "new" | "accepted" | "deferred"
   deferNote?: string;        // clinician note sent to the patient when deferred
 };
+
+export type ScreeningTask = {
+  id: string;
+  title: string;
+  status: "due" | "complete";
+  // You can add more fields later if needed, e.g.:
+  // description?: string;
+  // dueDate?: string;
+};
+
