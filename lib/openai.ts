@@ -1,9 +1,26 @@
+// lib/openai.ts
 import OpenAI from "openai";
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY is not set in .env.local");
-}
+let cachedClient: OpenAI | null = null;
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+/**
+ * Lazy OpenAI client creator.
+ * - Returns null if OPENAI_API_KEY is missing.
+ * - Avoids throwing at import time (which was breaking your API route in prod).
+ */
+export function getOpenAIClient(): OpenAI | null {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    console.error(
+      "[OpenAI] Missing OPENAI_API_KEY in environment. Falling back to safe triage defaults."
+    );
+    return null;
+  }
+
+  if (!cachedClient) {
+    cachedClient = new OpenAI({ apiKey });
+  }
+
+  return cachedClient;
+}

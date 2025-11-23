@@ -172,7 +172,7 @@ export default function PatientPage() {
     }
   };
 
-  // 🔧 IMPORTANT: now automatically attaches the patient's name
+    // 🔧 IMPORTANT: now automatically attaches the patient's name
   const handleSubmit = async (input: SymptomInput) => {
     setLoading(true);
     setError(null);
@@ -201,25 +201,41 @@ export default function PatientPage() {
         body: JSON.stringify(payload),
       });
 
-      const data: TriageResult = await res.json();
+      const rawText = await res.text(); // 👈 read as text first
+      let data: TriageResult | null = null;
 
-      if (!res.ok) {
-        setError("There was a problem analyzing your symptoms.");
-      } else {
-        setTriageResult(data);
-
-        // ✅ Save into Firestore so the clinician can see the REAL name
-        await savePreconsult(input, data, {
-          patientName: derivedName,
-        });
+      // Try to parse JSON if possible
+      try {
+        data = rawText ? (JSON.parse(rawText) as TriageResult) : null;
+      } catch {
+        data = null;
       }
+
+      if (!res.ok || !data) {
+        console.error(
+          "[triage] server error",
+          res.status,
+          rawText || "(empty body)"
+        );
+        setError("There was a problem analyzing your symptoms.");
+        return;
+      }
+
+      // ✅ success path
+      setTriageResult(data);
+
+      // Save into Firestore so the clinician can see the REAL name
+      await savePreconsult(input, data, {
+        patientName: derivedName,
+      });
     } catch (e) {
-      console.error(e);
+      console.error("[triage] network/JS error", e);
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
 
   // Ask for exact user location
   const requestLocation = () => {

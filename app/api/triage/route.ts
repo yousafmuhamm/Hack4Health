@@ -1,22 +1,43 @@
+// app/api/triage/route.ts
 import { NextRequest } from "next/server";
-import {openai} from "@/lib/openai";
+import { getOpenAIClient } from "@/lib/openai";
 
 type TriageResponse = {
-      urgency: "emergency" | "urgent" | "soon" | "routine";
-  recommendedCare: "ER" | "URGENT_CARE" | "WALK_IN" | "FAMILY_DOCTOR" | "SELF_CARE";
+  urgency: "emergency" | "urgent" | "soon" | "routine";
+  recommendedCare:
+    | "ER"
+    | "URGENT_CARE"
+    | "WALK_IN"
+    | "FAMILY_DOCTOR"
+    | "SELF_CARE";
   summary: string; // short explanation to show in UI
-  advice: string;  // patient-facing text
+  advice: string; // patient-facing text
+};
+
+// 🚑 Safe fallback used when OpenAI or JSON parsing fails
+const SAFE_FALLBACK: TriageResponse = {
+  urgency: "emergency",
+  recommendedCare: "ER",
+  summary:
+    "There was a technical problem analyzing your symptoms, so we are defaulting to the safest option.",
+  advice:
+    "Because we cannot reliably analyze your symptoms right now, please call emergency services (911) or go to the nearest emergency department if you feel very unwell or are worried. This tool does not replace a doctor.",
 };
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
     const { age, symptoms, onset, severity, redFlags, messages } = body;
 
-    // `messages` = optional chat history array from the UI, like:
-    // [{ role: "user", content: "..." }, { role: "assistant", content: "..." }, ...]
-    // For now we’ll just use a single-turn if none is provided.
+    const client = getOpenAIClient();
+
+    // If there is no API key in this environment, immediately return safe fallback
+    if (!client) {
+      return new Response(JSON.stringify(SAFE_FALLBACK), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     const userDescription = `
 Age: ${age}
@@ -60,7 +81,7 @@ Return **ONLY** valid JSON in this exact TypeScript-like shape:
       },
     ];
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0,
       messages: chatMessages,
@@ -68,20 +89,40 @@ Return **ONLY** valid JSON in this exact TypeScript-like shape:
 
     const raw = completion.choices[0].message.content ?? "";
 
+    // 🧹 Try to extract the JSON part even if the model adds extra text
+    let jsonText = raw;
+    const firstBrace = raw.indexOf("{");
+    const lastBrace = raw.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      jsonText = raw.slice(firstBrace, lastBrace + 1);
+    }
+
     let parsed: TriageResponse;
+
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(jsonText);
+
+      // quick validation of shape
+      const validUrgency = ["emergency", "urgent", "soon", "routine"];
+      const validCare = [
+        "ER",
+        "URGENT_CARE",
+        "WALK_IN",
+        "FAMILY_DOCTOR",
+        "SELF_CARE",
+      ];
+
+      if (
+        !validUrgency.includes(parsed.urgency) ||
+        !validCare.includes(parsed.recommendedCare) ||
+        typeof parsed.summary !== "string" ||
+        typeof parsed.advice !== "string"
+      ) {
+        throw new Error("Invalid triage JSON shape");
+      }
     } catch (e) {
-      console.error("Failed to parse AI JSON:", raw);
-      // Fail safe toward ER
-      parsed = {
-        urgency: "emergency",
-        recommendedCare: "ER",
-        summary:
-          "There was a technical problem interpreting the AI response, so we are defaulting to the safest option.",
-        advice:
-          "Because we cannot reliably analyze your symptoms right now, please call emergency services (911) or go to the nearest emergency department if you feel very unwell or are worried. This tool does not replace a doctor.",
-      };
+      console.error("Failed to parse AI JSON:", raw, e);
+      parsed = SAFE_FALLBACK;
     }
 
     return new Response(JSON.stringify(parsed), {
@@ -90,19 +131,10 @@ Return **ONLY** valid JSON in this exact TypeScript-like shape:
     });
   } catch (err) {
     console.error("Triage API error:", err);
-    return new Response(
-      JSON.stringify({
-        urgency: "emergency",
-        recommendedCare: "ER",
-        summary:
-          "A server error occurred while trying to analyze the situation.",
-        advice:
-          "Because of a technical issue, we cannot safely guide you right now. If you feel very unwell, have severe symptoms, or are worried, please call 911 or go to the nearest ER immediately.",
-      } as TriageResponse),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    // Final safety net: still return valid JSON, not a 500 HTML page
+    return new Response(JSON.stringify(SAFE_FALLBACK), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
