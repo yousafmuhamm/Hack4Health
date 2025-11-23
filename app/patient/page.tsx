@@ -11,10 +11,12 @@ import LocationSection from "@/components/LocationSection";
 import ChatWidget from "@/components/ChatWidget";
 import MapSection from "@/components/MapSection";
 
-import { SymptomInput, TriageResult } from "@/lib/types";
-// we call /api/triage instead of getTriageResult
+import { SymptomInput, TriageResult, Preconsult } from "@/lib/types";
 import { cognitoLogout } from "@/app/utils/logout";
-import { savePreconsult } from "@/lib/db";
+import {
+  savePreconsult,
+  fetchDeferredPreconsultsForPatient,
+} from "@/lib/db";
 
 type LatLng = { lat: number; lng: number };
 
@@ -23,7 +25,7 @@ function buildLoginUrl(role: "patient" | "clinician") {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000"
-       : "https://main.d2rm24vunvbzge.amplifyapp.com";
+      : "https://main.d2rm24vunvbzge.amplifyapp.com";
 
   const state = JSON.stringify({ role });
 
@@ -61,6 +63,31 @@ function inferCareType(result: TriageResult): "ER" | "WALK_IN" | "GENERAL" {
   return "GENERAL";
 }
 
+// Infer recommendedCare from clinician's deferral note
+function inferCareFromDeferNote(
+  note: string
+): "ER" | "Walk-in clinic" | "Family doctor" | "Virtual care" {
+  const text = note.toLowerCase();
+  if (text.includes("emergency") || text.includes("er") || text.includes("911")) {
+    return "ER";
+  }
+  if (
+    text.includes("walk-in") ||
+    text.includes("walk in") ||
+    text.includes("urgent care")
+  ) {
+    return "Walk-in clinic";
+  }
+  if (
+    text.includes("family doctor") ||
+    text.includes("gp") ||
+    text.includes("primary care")
+  ) {
+    return "Family doctor";
+  }
+  return "Virtual care";
+}
+
 export default function PatientPage() {
   const router = useRouter();
   const auth = useAuth();
@@ -78,8 +105,27 @@ export default function PatientPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [medicalHistory, setMedicalHistory] = useState("");
 
-  const email =
-    (auth.user?.profile?.email as string | undefined) ?? "patient@example.com";
+  // New: deferral banner
+  const [deferredNotice, setDeferredNotice] = useState<Preconsult | null>(null);
+  const [showDeferralBanner, setShowDeferralBanner] = useState(true);
+
+  // 🔹 Unified profile info (name + email)
+  const profile = auth.user?.profile as any | undefined;
+
+  const email: string =
+    (profile?.email as string | undefined) ?? "patient@example.com";
+
+  const nameFromProfile: string =
+    (profile?.name as string | undefined) ||
+    [profile?.given_name, profile?.family_name].filter(Boolean).join(" ");
+
+  // What we show in the UI
+  const displayName: string =
+    (nameFromProfile && nameFromProfile.trim()) || email;
+
+  // Initial for avatar
+  const avatarInitial: string =
+    (displayName?.[0]?.toUpperCase() as string) || "P";
 
   // Load saved medical history from localStorage
   useEffect(() => {
@@ -90,6 +136,31 @@ export default function PatientPage() {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    console.log("🔎 OIDC profile in app:", auth.user?.profile);
+  }, [auth.user]);
+
+  // Load any deferred notes for this patient
+  useEffect(() => {
+    const name = displayName;
+    if (!name) return;
+
+    (async () => {
+      try {
+        const deferrals = await fetchDeferredPreconsultsForPatient(name);
+        if (deferrals.length > 0) {
+          const latest = deferrals.sort(
+            (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)
+          )[0];
+          setDeferredNotice(latest);
+          setShowDeferralBanner(true);
+        }
+      } catch (e) {
+        console.error("Error loading deferred notices:", e);
+      }
+    })();
+  }, [displayName]);
 
   // Persist medical history
   const handleHistoryChange = (value: string) => {
@@ -116,9 +187,7 @@ export default function PatientPage() {
         .trim();
 
     const derivedName =
-      fromProfileName.trim() ||
-      fromEmailPrefix ||
-      "Patient";
+      fromProfileName.trim() || fromEmailPrefix || "Patient";
 
     const payload = {
       ...input,
@@ -139,8 +208,10 @@ export default function PatientPage() {
       } else {
         setTriageResult(data);
 
-        // Save into Firestore so the clinician can see it
-        await savePreconsult(payload as any, data);
+        // ✅ Save into Firestore so the clinician can see the REAL name
+        await savePreconsult(input, data, {
+          patientName: derivedName,
+        });
       }
     } catch (e) {
       console.error(e);
@@ -230,7 +301,7 @@ export default function PatientPage() {
                 className="flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3 py-1.5 text-xs hover:bg-black/35"
               >
                 <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lavender-400)] text-[var(--maroon-700)] text-xs font-semibold">
-                  {email?.[0]?.toUpperCase() ?? "P"}
+                  {avatarInitial}
                 </span>
                 <span className="hidden md:block text-xs font-medium">
                   Profile
@@ -244,7 +315,7 @@ export default function PatientPage() {
                       Signed in as
                     </p>
                     <p className="truncate text-[11px] text-slate-100">
-                      {email}
+                      {displayName}
                     </p>
                   </div>
                   <button
@@ -266,6 +337,46 @@ export default function PatientPage() {
               )}
             </div>
           </section>
+
+          {/* 🔔 Deferral banner (if clinician deferred a case for this patient) */}
+          {deferredNotice &&
+            showDeferralBanner &&
+            deferredNotice.deferNote && (
+              <div className="mb-2 rounded-2xl border border-amber-300 bg-amber-50/90 px-4 py-3 text-xs text-amber-900 shadow-sm flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide">
+                      Important message from your clinician
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap">
+                      {deferredNotice.deferNote}
+                    </p>
+                    <p className="mt-1 text-[10px] text-amber-800/80">
+                      Sent:{" "}
+                      {new Date(deferredNotice.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeferralBanner(false)}
+                    className="ml-2 text-[11px] text-amber-800/70 hover:text-amber-900"
+                  >
+                    Dismiss ✕
+                  </button>
+                </div>
+
+                <div className="mt-2">
+                  <p className="mb-1 text-[11px] font-semibold">
+                    Next steps &amp; nearby care
+                  </p>
+                  <LocationSection
+                    recommendedCare={inferCareFromDeferNote(
+                      deferredNotice.deferNote ?? ""
+                    )}
+                  />
+                </div>
+              </div>
+            )}
 
           {/* CareQuest AI + triage tools */}
           <section id="patient-portal" className="space-y-6">

@@ -36,7 +36,8 @@ function generateTasks(acceptedCases: Preconsult[]): ScreeningTask[] {
     }
 
     // Age-based colorectal screening (50+)
-    if (pc.age >= 50) {
+    // pc.age is number | null, so guard against null
+    if (pc.age !== null && pc.age >= 50) {
       tasks.push({
         id: `fit-${pc.id}`,
         label: "Colon cancer screen (FIT)",

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import ChatWidget from "@/components/ChatWidget";
 import { useRouter } from "next/navigation";
+import { useAuth } from "react-oidc-context";
+
 
 type Role = "patient" | "clinician" | "guest";
 
@@ -11,6 +13,7 @@ export default function HealthConnectLanding() {
   const router = useRouter();
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const auth = useAuth();
 
   /* --------------------------
      AWS COGNITO LOGIN
@@ -45,7 +48,7 @@ export default function HealthConnectLanding() {
     );
   };
 
-  const handleRoleLogin = (role: Role) => {
+    const handleRoleLogin = (role: Role) => {
     if (role === "guest") {
       setShowRoleModal(false);
       router.push("/guest");
@@ -54,43 +57,26 @@ export default function HealthConnectLanding() {
 
     setShowRoleModal(false);
 
-    const url = buildLoginUrl(role);
-    window.location.href = url;
+    const returnPath =
+      role === "clinician"
+        ? "/clinician"
+        : role === "patient"
+        ? "/patient"
+        : "/";
+
+    auth
+      .signinRedirect({
+        // This "state" object will come back in onSigninCallback(user.state)
+        state: {
+          role,
+          returnPath,
+        },
+      })
+      .catch((err) => {
+        console.error("Error starting OIDC signin redirect:", err);
+      });
   };
 
-  /* --------------------------
-     Detect Cognito redirect
-  --------------------------- */
-  useEffect(() => {
-    // Only run in browser
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    const stateRaw = params.get("state");
-
-    if (code && stateRaw) {
-      try {
-        // stateRaw was URL-encoded JSON, URLSearchParams already decoded it
-        const state = JSON.parse(stateRaw) as {
-          role?: string;
-          returnPath?: string;
-        };
-
-        if (state.role) {
-          localStorage.setItem("role", state.role);
-        }
-
-        if (state.returnPath) {
-          // Redirect to clinician/patient dashboard after successful login
-          router.replace(state.returnPath);
-          return;
-        }
-      } catch (e) {
-        console.error("Invalid state JSON from Cognito redirect:", e);
-      }
-    }
-  }, [router]);
 
   /* --------------------------
      UI START

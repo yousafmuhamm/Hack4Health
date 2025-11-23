@@ -6,6 +6,8 @@ import {
   getDocs,
   serverTimestamp,
   updateDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import type { SymptomInput, TriageResult, Preconsult } from "./types";
 
@@ -96,7 +98,7 @@ export async function fetchPreconsults(): Promise<Preconsult[]> {
       summary: data.summary ?? "",
       details: data.details ?? "",
       createdAt: created,
-      urgency, // ✅ this matches your Preconsult type
+      urgency,
       status: data.status ?? "pending",
       deferNote: data.deferNote ?? "",
     } as Preconsult;
@@ -104,11 +106,53 @@ export async function fetchPreconsults(): Promise<Preconsult[]> {
 }
 
 /**
- * Called on the CLINICIAN side when they accept / defer.
+ * Called on the PATIENT side to load any deferred pre-consults for them.
+ * We match on patientName for now (works for your hackathon demo).
+ */
+export async function fetchDeferredPreconsultsForPatient(
+  patientName: string
+): Promise<Preconsult[]> {
+  const q = query(
+    collection(db, "consultations"),
+    where("patientName", "==", patientName),
+    where("status", "==", "deferred")
+  );
+
+  const snap = await getDocs(q);
+
+  return snap.docs.map((d) => {
+    const data: any = d.data();
+
+    const created =
+      data.createdAt && typeof data.createdAt.toMillis === "function"
+        ? data.createdAt.toMillis()
+        : Date.now();
+
+    const urgency: string =
+      (data.urgency as string) ??
+      (data.urgencyLabel as string) ??
+      "routine";
+
+    return {
+      id: d.id,
+      patientName: data.patientName ?? "Patient",
+      age: data.age ?? null,
+      summary: data.summary ?? "",
+      details: data.details ?? "",
+      createdAt: created,
+      urgency,
+      status: data.status ?? "pending",
+      deferNote: data.deferNote ?? "",
+    } as Preconsult;
+  });
+}
+
+/**
+ * Called on the CLINICIAN side when they accept / defer / reopen.
  */
 export async function updatePreconsultStatus(
   id: string,
-  status: "accepted" | "deferred",
+  status: "accepted" | "deferred" | "pending",
   deferNote?: string
 ) {
   const ref = doc(db, "consultations", id);

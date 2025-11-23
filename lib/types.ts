@@ -23,22 +23,29 @@ export type Facility = {
   address?: string;
 };
 
+// --- Preconsult + clinician workflow types ---
 
-export type PreconsultStatus = "new" | "accepted" | "deferred";
-export type PreconsultUrgency = "not_urgent" | "mildly_urgent" | "very_urgent";
+export type PreconsultStatus = "pending" | "accepted" | "deferred";
+
+// keep this flexible for now – we normalize labels elsewhere
+export type PreconsultUrgency = string;
 
 export type Preconsult = {
   id: string;
   patientName: string;
-  age: number;
+  age: number | null;
   summary: string;
   details?: string;
-  createdAt: string;
-  urgency: PreconsultUrgency; // triage result from AI/patient flow
 
-  // New fields for clinician workflow
-  status?: PreconsultStatus; // "new" | "accepted" | "deferred"
-  deferNote?: string;        // clinician note sent to the patient when deferred
+  // Firestore timestamp stored as millis
+  createdAt: number;
+
+  // triage result / label from AI/patient flow
+  urgency: PreconsultUrgency;
+
+  // Clinician workflow
+  status?: PreconsultStatus; // "pending" | "accepted" | "deferred"
+  deferNote?: string; // clinician note sent to the patient when deferred
 };
 
 export type ScreeningTask = {
@@ -49,4 +56,3 @@ export type ScreeningTask = {
   // description?: string;
   // dueDate?: string;
 };
-
