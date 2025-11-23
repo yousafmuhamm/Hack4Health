@@ -13,6 +13,16 @@ export type TriageResult = {
   recommendedCare: "ER" | "Walk-in clinic" | "Family doctor" | "Virtual care";
   summary: string;
 };
+export type RecommendedCare = TriageResult["recommendedCare"];
+
+export type Facility = {
+  id: string;
+  name: string;
+  distanceKm: number;
+  supportsCare: RecommendedCare[];
+  address?: string;
+};
+
 
 export type PreconsultStatus = "new" | "accepted" | "deferred";
 export type PreconsultUrgency = "not_urgent" | "mildly_urgent" | "very_urgent";
