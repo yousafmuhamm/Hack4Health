@@ -37,7 +37,7 @@ Red-flag symptoms: ${redFlags ? "yes" : "no"}
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0,
-      response_format: { type: "json_object" },  // ⭐ REQUIRED
+      response_format: { type: "json_object" },  
       messages: [
         {
           role: "system",
