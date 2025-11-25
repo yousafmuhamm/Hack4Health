@@ -14,7 +14,7 @@ export function cognitoLogout() {
   const redirectUri =
     typeof window !== "undefined" && window.location.hostname === "localhost"
       ? "http://localhost:3000" // landing page in dev
-      : "https://main.d2rm24vunvbzge.amplifyapp.com/"; // TODO: your real prod landing URL
+      : "https://hack4-health.vercel.app"; // TODO: your real prod landing URL
 
   const logoutUrl = `${domain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
     redirectUri
